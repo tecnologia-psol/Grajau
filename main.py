@@ -45,12 +45,12 @@ indicadores = {
 }
 
 minutos = {
-	"15",
-	"30",
-	"45",
-	"60",
-	"90",
-	"120"
+	"15": "15 minutos",
+	"30": "30 minutos",
+	"45": "45 minutos",
+	"60": "60 minutos",
+	"90": "90 minutos",
+	"120": "120 minutos"
 }
 
 # P001 pessoas no total ...
