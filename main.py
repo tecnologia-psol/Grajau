@@ -44,7 +44,17 @@ indicadores = {
 	"CT": "Para todos os Centros de Referência da Assistência Social (CRAS)"
 }
 
+minutos = {
+	"15",
+	"30",
+	"45",
+	"60",
+	"90",
+	"120"
+}
+
 # P001 pessoas no total ...
+# CMAEF30 -> Número de escolas de ensino fundamental acessíveis em até 30 minutos
 
 modes = {}
 years = {}
@@ -53,7 +63,7 @@ indicadores = {}
 print("Coletando lista de rótulos")
 
 for feature in acesso_layer:
-	print("FEAT ",feature); break
+	print("FEAT ",feature["TMIEM"]); break
 	# print(feature.year,feature.mode)
 	if modes.get(feature.mode) == None:
 		modes[feature.mode] = feature.mode
