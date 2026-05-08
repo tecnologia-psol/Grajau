@@ -24,12 +24,36 @@ tipos = {
 	"TMI": "Indicador de tempo mínimo até oportunidade mais próxima"
 }
 
+indicadores = {
+	"TT": "Para todos os empregos",
+	"TB": "Para empregos de baixa escolaridade indicador",
+	"TM": "Para empregos de média escolaridade indicador",
+	"TA": "Para empregos de alta escolaridade indicador",
+	"ST": "Para todos os estabelecimentos de saúde indicadores",
+	"SB": "Para estabelecimentos de sáude de baixa complexidade indicadores",
+	"SM": "Para estabelecimentos de sáude de média complexidade indicadores",
+	"SA": "Para estabelecimentos de sáude de alta complexidade indicadores",
+	"ET": "Para todos os estabelecimentos de educação indicadores",
+	"EI": "Para estabelecimentos de educação infantil indicadores",
+	"EF": "Para estabelecimentos de educação fundamental indicadores",
+	"EM": "Para estabelecimentos de educação média indicadores",
+	"MT": "Para matrículas de todos níveis de ensino indicadores",
+	"MI": "Para matrículas de ensino infantil indicadores",
+	"MF": "Para matrículas de ensino fundamental indicadores",
+	"MM": "Para matrículas de ensino médio indicadores",
+	"CT": "Para todos os Centros de Referência da Assistência Social (CRAS)"
+}
+
+# P001 pessoas no total ...
+
 modes = {}
 years = {}
+indicadores = {}
 
-printf("Coletando lista de rótulos")
+print("Coletando lista de rótulos")
+
 for feature in acesso_layer:
-	# print("FEAT ",feature)
+	print("FEAT ",feature); break
 	# print(feature.year,feature.mode)
 	if modes.get(feature.mode) == None:
 		modes[feature.mode] = feature.mode
