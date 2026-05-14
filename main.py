@@ -142,6 +142,7 @@ def fetch_modality(features, modality) -> gdal.Dataset:
 		feature_new.SetField("population",population)
 		feature_new.SetField("density",density)
 		feature_new.SetField("data_times",data_times)
+		feature_new.SetGeometry(feature.geometry())
 		
 		layer.CreateFeature(feature_new)
 		pass
