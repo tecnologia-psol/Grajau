@@ -1,0 +1,1 @@
+yes | rm -R ./tmp
