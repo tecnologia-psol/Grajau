@@ -1,6 +1,7 @@
 from osgeo import gdal, ogr
 import sys, os
 import pandas as pd
+from matplotlib import pyplot as plt
 
 ogr.UseExceptions()
 
@@ -87,7 +88,25 @@ print('\nNúmero de features = ',feature_count)
 
 INDICADORES_EXISTENTES = {}
 
-def calculate_for_divisions(features: gdal.Dataset, modality: string):
+def make_bar(title,x_axis,y_axis,filename):
+	plt.bar(x_axis,y_axis)
+	plt.xticks(rotation=80)
+	plt.title(title)
+	plt.figure(figsize=(12, 6), dpi=80)
+	plt.savefig('to/modalidades_graficos/'+filename+'.png')
+
+def gen_table(data, modality: string, modality_description: string):
+	dataframe = pd.DataFrame(columns=[
+		'distrito_nome','distrito_sigla','data_times_sum','data_average',
+		'data_by_population','hit_sum'
+	])
+	for index in data:
+		dataframe.loc[index] = data[index]
+		
+	dataframe.to_excel('./to/modalidades_tabelas/' + modality +'.xlsx')
+	make_bar(modality_description,dataframe['distrito_nome'],dataframe['data_by_population'],modality)
+
+def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indicador, minuto):
 	global distritos_vector, INDICADORES_EXISTENTES
 	distritos_layer: ogr.Layer = distritos_vector.GetLayer()
 
@@ -119,6 +138,7 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string):
 
 	print("Analisando distritos...",end=' ')
 	
+	distrito_count = 0
 	for distrito_feature in distritos_layer:
 		distrito_feature: ogr.Feature
 		distrito_nome = distrito_feature['NOME_DIST']
@@ -178,7 +198,9 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string):
 			"data_by_population": data_by_population,
 			"hit_sum": hit_sum
 		}
-		INDICADORES_EXISTENTES[modality].data_divisions[distrito_nome] = table_data
+		INDICADORES_EXISTENTES[modality]["data_divisions"][distrito_count] = table_data
+		distrito_count += 1
+		desc = tipo + ' ' + indicador + ' ' + ' em ' + minuto + ' minutos'
 
 		new_feature.SetField("data_sum",data_sum)
 		new_feature.SetField("population_sum",population_sum)
@@ -191,6 +213,7 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string):
 		new_feature.SetGeometry(distrito_geometry)
 		layer.CreateFeature(new_feature)
 
+	gen_table(INDICADORES_EXISTENTES[modality]["data_divisions"],modality,desc)
 	division_out.Close()
 	print('')
 	exit(0)
@@ -223,9 +246,9 @@ def fetch_modality(features, modality, tipo, indicador, minuto) -> gdal.Dataset:
 	human_readable = tipos[tipo] + ' - ' + indicadores[indicador] + ' - ' + minutos[minuto]
 	
 	INDICADORES_EXISTENTES[modality] = {
-		name: modality,
-		human_readable: human_readable,
-		data_divisions: {}
+		'name': modality,
+		'human_readable': human_readable,
+		'data_divisions': {}
 	}
 
 	file_loc = "./tmp/modalidades/"+modality+".shp"
