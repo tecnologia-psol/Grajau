@@ -36,21 +36,21 @@ tipos = {
 
 indicadores = {
 	"TT": "Para todos os empregos",
-	"TB": "Para empregos de baixa escolaridade indicador",
-	"TM": "Para empregos de média escolaridade indicador",
-	"TA": "Para empregos de alta escolaridade indicador",
-	"ST": "Para todos os estabelecimentos de saúde indicadores",
-	"SB": "Para estabelecimentos de sáude de baixa complexidade indicadores",
-	"SM": "Para estabelecimentos de sáude de média complexidade indicadores",
-	"SA": "Para estabelecimentos de sáude de alta complexidade indicadores",
-	"ET": "Para todos os estabelecimentos de educação indicadores",
-	"EI": "Para estabelecimentos de educação infantil indicadores",
-	"EF": "Para estabelecimentos de educação fundamental indicadores",
-	"EM": "Para estabelecimentos de educação média indicadores",
-	"MT": "Para matrículas de todos níveis de ensino indicadores",
-	"MI": "Para matrículas de ensino infantil indicadores",
-	"MF": "Para matrículas de ensino fundamental indicadores",
-	"MM": "Para matrículas de ensino médio indicadores",
+	"TB": "Para empregos de baixa escolaridade",
+	"TM": "Para empregos de média escolaridade",
+	"TA": "Para empregos de alta escolaridade",
+	"ST": "Para todos os estabelecimentos de saúde",
+	"SB": "Para estabelecimentos de sáude de baixa complexidade",
+	"SM": "Para estabelecimentos de sáude de média complexidade",
+	"SA": "Para estabelecimentos de sáude de alta complexidade",
+	"ET": "Para todos os estabelecimentos de educação",
+	"EI": "Para estabelecimentos de educação infantil",
+	"EF": "Para estabelecimentos de educação fundamental",
+	"EM": "Para estabelecimentos de educação média",
+	"MT": "Para matrículas de todos níveis de ensino",
+	"MI": "Para matrículas de ensino infantil",
+	"MF": "Para matrículas de ensino fundamental",
+	"MM": "Para matrículas de ensino médio",
 	"CT": "Para todos os Centros de Referência da Assistência Social (CRAS)"
 }
 
@@ -66,47 +66,66 @@ minutos = {
 # P001 pessoas no total ...
 # CMAEF30 -> Número de escolas de ensino fundamental acessíveis em até 30 minutos
 
-transport_modes = {}
-years = {}
+transport_modes = {
+	'bicycle': 'bicicleta',
+	'walk': 'andando',
+	'car': 'carro',
+	'public_transport': 'transporte público'
+}
 
-print("Coletando lista de rótulos...")
+years = { '2017': 2017, '2018': 2018, '2019': 2019 }
+
+# print("Coletando lista de rótulos...")
 
 feature_count = 0
 for feature in acesso_layer:
-	# print("mode ",feature)
-	if transport_modes.get(feature.mode) == None:
-		transport_modes[feature.mode] = feature.mode
-	pass
-	year_s = str(int(feature.year))
-	if years.get(year_s) == None:
-		years[year_s] = int(feature.year)
-	pass
 	feature_count+=1
+# 	# print("mode ",feature)
+# 	if transport_modes.get(feature.mode) == None:
+# 		transport_modes[feature.mode] = feature.mode
+# 	pass
+# 	year_s = str(int(feature.year))
+# 	if years.get(year_s) == None:
+# 		years[year_s] = int(feature.year)
+# 	pass
 
-print('transport modes = ',transport_modes)
-print('years = ',years)
+# print('transport modes = ',transport_modes)
+# print('years = ',years)
 print('\nNúmero de features = ',feature_count)
 
 INDICADORES_EXISTENTES = {}
 
 def make_bar(title,x_axis,y_axis,filename):
-	plt.figure(figsize=(13, 25), dpi=200)
+	plt.figure()
 	plt.barh(x_axis,y_axis,color='purple',height=1)
 	plt.yticks(rotation=15)
 	plt.title("\n".join(textwrap.wrap(title,40)),loc='center',)
+	plt.tight_layout()
 	plt.savefig('to/modalidades_graficos/'+filename+'.png')
+
 	plt.figure()
+	plt.yticks(rotation=15)
+	plt.title("\n".join(textwrap.wrap(title + ' (mais baixos)',40)),loc='center',)
 	plt.barh(x_axis[:15],y_axis[:15],color='purple',height=1)
+	plt.tight_layout()
 	plt.savefig('to/modalidades_graficos_redux/'+filename+'_least_'+'.png')
+
 	plt.figure()
+	plt.yticks(rotation=15)
+	plt.title("\n".join(textwrap.wrap(title + ' (mais altos)',40)),loc='center',)
 	plt.barh(x_axis[-15:],y_axis[-15:],color='purple',height=1)
+	plt.tight_layout()
 	plt.savefig('to/modalidades_graficos_redux/'+filename+'_most_'+'.png')
-	plt.figure()
-	# plt.barh(x_axis[-10:] + x_axis[:10],y_axis[-10:] + y_axis[:10],color='purple',height=1)
-	
+
+	plt.figure(figsize=(10, 15), dpi=400)
+	plt.yticks(rotation=15)
+	plt.title("\n".join(textwrap.wrap(title + ' (mais altos e mais baixos)',40)),loc='center',)
+	plt.barh(x_axis[:15],y_axis[:15],color='purple',height=1)
+	plt.barh(x_axis[-15:],y_axis[-15:],color='purple',height=1)
+	plt.tight_layout()
 	plt.savefig('to/modalidades_graficos_redux/'+filename+'_both_'+'.png')
 
-def gen_table(data, modality: string, modality_description: string):
+def gen_table(data, modality: string, modality_description: string, year, transport_mode):
 	dataframe = pd.DataFrame(columns=[
 		'distrito_nome','distrito_sigla','data_times_sum','data_average',
 		'data_by_population','hit_sum'
@@ -114,15 +133,15 @@ def gen_table(data, modality: string, modality_description: string):
 	for index in data:
 		dataframe.loc[index] = data[index]
 		
-	dataframe.to_excel('./to/modalidades_tabelas/' + modality +'.xlsx')
+	dataframe.to_excel('./to/modalidades_tabelas/' + modality + '_' + year + '_' + transport_mode +'.xlsx')
 	dataframe = dataframe.sort_values('data_by_population')
-	make_bar(modality_description,dataframe['distrito_nome'],dataframe['data_by_population'],modality)
+	make_bar(modality_description,dataframe['distrito_nome'],dataframe['data_by_population'],modality + '_' + year + '_' + transport_mode)
 
-def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indicador, minuto):
+def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indicador, minuto, year, transport_mode):
 	global distritos_vector, INDICADORES_EXISTENTES
 	distritos_layer: ogr.Layer = distritos_vector.GetLayer()
 
-	file_loc = "./tmp/modalidades_distritos/"+modality+".shp"
+	file_loc = "./tmp/modalidades_distritos/"+modality+'_'+year+'_'+transport_mode+".shp"
 	division_out: gdal.Dataset = gdal.GetDriverByName("ESRI Shapefile").Create(file_loc,0,0,1)
 	layer: ogr.Layer = division_out.GetLayer()
 	if not layer:
@@ -225,12 +244,11 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indi
 		layer.CreateFeature(new_feature)
 
 	desc = tipos[tipo] + ' ' + indicadores[indicador].lower() + ' ' + ' em ' + minutos[minuto]
-	gen_table(INDICADORES_EXISTENTES[modality]["data_divisions"],modality,desc)
+	gen_table(INDICADORES_EXISTENTES[modality]["data_divisions"],modality,desc, year, transport_mode)
 	division_out.Close()
 	print('')
-	exit(0)
 
-def fetch_modality(features, modality, tipo, indicador, minuto) -> gdal.Dataset:
+def fetch_modality(features, modality, tipo, indicador, minuto, year, transport_mode) -> gdal.Dataset:
 	global INDICADORES_EXISTENTES
 	feat_to_add = []
 
@@ -260,10 +278,12 @@ def fetch_modality(features, modality, tipo, indicador, minuto) -> gdal.Dataset:
 	INDICADORES_EXISTENTES[modality] = {
 		'name': modality,
 		'human_readable': human_readable,
-		'data_divisions': {}
+		'data_divisions': {},
+		'year':year,
+		'transport_mode':transport_mode
 	}
 
-	file_loc = "./tmp/modalidades/"+modality+".shp"
+	file_loc = "./tmp/modalidades/"+modality+'_'+year+'_'+transport_mode+".shp"
 	out: gdal.Dataset = gdal.GetDriverByName("ESRI Shapefile").Create(file_loc,0,0,1)
 	layer: ogr.Layer = out.GetLayer()
 	if not layer:
@@ -306,7 +326,7 @@ def fetch_modality(features, modality, tipo, indicador, minuto) -> gdal.Dataset:
 		
 		layer.CreateFeature(feature_new)
 
-	calculate_for_divisions(out, modality, tipo, indicador, minuto)
+	calculate_for_divisions(out, modality, tipo, indicador, minuto, year, transport_mode)
 	out.Close()
 
 	# gdal.Rasterize(
@@ -336,7 +356,7 @@ def fetch_all_indicators(features,year,transport_mode):
 				modality = tipo + indicador + minuto
 				human_readable = tipos[tipo] + ' - ' + indicadores[indicador] + ' - ' + minutos[minuto]
 				print("Compilando modalidade",modality,'(',human_readable,')')
-				fetch_modality(features, modality, tipo, indicador, minuto)
+				fetch_modality(features, modality, tipo, indicador, minuto, year, transport_mode)
 	pass
 
 def fetch_for_data(year, transport_mode):
