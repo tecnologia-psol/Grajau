@@ -1,5 +1,5 @@
 from osgeo import gdal, ogr
-import sys, os
+import sys, os, textwrap
 import pandas as pd
 from matplotlib import pyplot as plt
 
@@ -16,6 +16,7 @@ os.mkdir("./tmp/modalidades_distritos")
 os.mkdir("./to/modalidades_mapas")
 os.mkdir("./to/modalidades_tabelas")
 os.mkdir("./to/modalidades_graficos")
+os.mkdir("./to/modalidades_graficos_redux")
 
 print(from_d, '->', to_d)
 
@@ -89,11 +90,21 @@ print('\nNúmero de features = ',feature_count)
 INDICADORES_EXISTENTES = {}
 
 def make_bar(title,x_axis,y_axis,filename):
-	plt.bar(x_axis,y_axis)
-	plt.xticks(rotation=80)
-	plt.title(title)
-	plt.figure(figsize=(12, 6), dpi=80)
+	plt.figure(figsize=(13, 25), dpi=200)
+	plt.barh(x_axis,y_axis,color='purple',height=1)
+	plt.yticks(rotation=15)
+	plt.title("\n".join(textwrap.wrap(title,40)),loc='center',)
 	plt.savefig('to/modalidades_graficos/'+filename+'.png')
+	plt.figure()
+	plt.barh(x_axis[:15],y_axis[:15],color='purple',height=1)
+	plt.savefig('to/modalidades_graficos_redux/'+filename+'_least_'+'.png')
+	plt.figure()
+	plt.barh(x_axis[-15:],y_axis[-15:],color='purple',height=1)
+	plt.savefig('to/modalidades_graficos_redux/'+filename+'_most_'+'.png')
+	plt.figure()
+	# plt.barh(x_axis[-10:] + x_axis[:10],y_axis[-10:] + y_axis[:10],color='purple',height=1)
+	
+	plt.savefig('to/modalidades_graficos_redux/'+filename+'_both_'+'.png')
 
 def gen_table(data, modality: string, modality_description: string):
 	dataframe = pd.DataFrame(columns=[
@@ -104,6 +115,7 @@ def gen_table(data, modality: string, modality_description: string):
 		dataframe.loc[index] = data[index]
 		
 	dataframe.to_excel('./to/modalidades_tabelas/' + modality +'.xlsx')
+	dataframe = dataframe.sort_values('data_by_population')
 	make_bar(modality_description,dataframe['distrito_nome'],dataframe['data_by_population'],modality)
 
 def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indicador, minuto):
@@ -200,8 +212,7 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indi
 		}
 		INDICADORES_EXISTENTES[modality]["data_divisions"][distrito_count] = table_data
 		distrito_count += 1
-		desc = tipo + ' ' + indicador + ' ' + ' em ' + minuto + ' minutos'
-
+		
 		new_feature.SetField("data_sum",data_sum)
 		new_feature.SetField("population_sum",population_sum)
 		new_feature.SetField("data_times_sum",data_times_sum)
@@ -213,6 +224,7 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indi
 		new_feature.SetGeometry(distrito_geometry)
 		layer.CreateFeature(new_feature)
 
+	desc = tipos[tipo] + ' ' + indicadores[indicador].lower() + ' ' + ' em ' + minutos[minuto]
 	gen_table(INDICADORES_EXISTENTES[modality]["data_divisions"],modality,desc)
 	division_out.Close()
 	print('')
