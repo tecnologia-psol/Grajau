@@ -8,10 +8,13 @@ from_d = sys.argv[1]
 to_d = sys.argv[2]
 temp_d = './tmp'
 
+# TODO peloamor faz constantes
 os.mkdir("./tmp")
 os.mkdir("./tmp/modalidades")
-os.mkdir("./tmp/modalidades_centroides")
 os.mkdir("./tmp/modalidades_distritos")
+os.mkdir("./to/modalidades_mapas")
+os.mkdir("./to/modalidades_tabelas")
+os.mkdir("./to/modalidades_graficos")
 
 print(from_d, '->', to_d)
 
@@ -82,8 +85,10 @@ print('transport modes = ',transport_modes)
 print('years = ',years)
 print('\nNúmero de features = ',feature_count)
 
+INDICADORES_EXISTENTES = {}
+
 def calculate_for_divisions(features: gdal.Dataset, modality: string):
-	global distritos_vector
+	global distritos_vector, INDICADORES_EXISTENTES
 	distritos_layer: ogr.Layer = distritos_vector.GetLayer()
 
 	file_loc = "./tmp/modalidades_distritos/"+modality+".shp"
@@ -91,24 +96,28 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string):
 	layer: ogr.Layer = division_out.GetLayer()
 	if not layer:
 		layer = division_out.CreateLayer('l1')
-	centroid_layer: ogr.Layer = division_out.CreateLayer('centroids')
-	hex_layer: ogr.Layer = division_out.CreateLayer('hex')
+	# centroid_layer: ogr.Layer = division_out.CreateLayer('centroids')
+	# hex_layer: ogr.Layer = division_out.CreateLayer('hex')
 
 	nome_field = ogr.FieldDefn("NOME_DIST", ogr.OFTString)
 	sigla_field = ogr.FieldDefn("SIGLA_DIST", ogr.OFTString)
 	data_sum_field = ogr.FieldDefn("data_sum", ogr.OFTReal)
+	hit_sum_field = ogr.FieldDefn("hit_sum", ogr.OFTReal)
 	data_times_field = ogr.FieldDefn("data_times_sum", ogr.OFTReal)
+	data_average_field = ogr.FieldDefn("data_average",ogr.OFTReal)
 	population_sum_field = ogr.FieldDefn("population_sum", ogr.OFTReal)
 	data_by_population_field = ogr.FieldDefn("data_by_population", ogr.OFTReal)
 	
 	layer.CreateField(nome_field)
 	layer.CreateField(sigla_field)
 	layer.CreateField(data_sum_field)
+	layer.CreateField(hit_sum_field)
 	layer.CreateField(data_times_field)
+	layer.CreateField(data_average_field)
 	layer.CreateField(population_sum_field)
 	layer.CreateField(data_by_population_field)
 
-	print("Analisando distritos... ",end='')
+	print("Analisando distritos...",end=' ')
 	
 	for distrito_feature in distritos_layer:
 		distrito_feature: ogr.Feature
@@ -116,9 +125,11 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string):
 		distrito_sigla = distrito_feature['SIGLA_DIST']
 		distrito_geometry: ogr.Geometry = distrito_feature.geometry()
 
-		population_sum = 0
-		data_sum = 0
-		data_times_sum = 0
+		population_sum = 0 # somatória da população de todos os hexágonos no distrito
+		data_sum = 0 # somatória de todos os indices no distrito
+		data_times_sum = 0 # somatória de todos (dado * população) no distrito
+		hit_sum = 0 # numero de hexagonos em um distrito
+		data_average = 0 # data_sum dividido pelo hit_sum
 
 		print(distrito_nome,end='   ',flush=True)
 		## FIXME Os pontos e os centroids tao saindo em lugares diferentes vou dormir flw
@@ -127,22 +138,24 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string):
 			feature: ogr.Feature
 			geometry: ogr.Geometry = feature.geometry()
 			centroid: ogr.Geometry = geometry.Centroid()
-			centroid_feature = ogr.Feature(ogr.FeatureDefn())
-			centroid_feature.SetGeometry(centroid)
-			centroid_layer.CreateFeature(centroid_feature)
-			hex_feature: ogr.Feature = ogr.Feature(ogr.FeatureDefn())
-			hex_feature.SetGeometry(geometry)
-			hex_layer.CreateFeature(hex_feature)
+			# centroid_feature = ogr.Feature(ogr.FeatureDefn())
+			# centroid_feature.SetGeometry(centroid)
+			# centroid_layer.CreateFeature(centroid_feature)
+			# hex_feature: ogr.Feature = ogr.Feature(ogr.FeatureDefn())
+			# hex_feature.SetGeometry(geometry)
+			# hex_layer.CreateFeature(hex_feature)
 			if distrito_geometry.Contains(centroid):
-				# print('hit')
 				data_sum += feature["data"]
 				population_sum += feature["population"]
 				data_times_sum += feature["data_times"]
+				hit_sum += 1
 		
 		defn = ogr.FeatureDefn()
 		defn.AddFieldDefn(nome_field)
 		defn.AddFieldDefn(sigla_field)
 		defn.AddFieldDefn(data_sum_field)
+		defn.AddFieldDefn(hit_sum_field)
+		defn.AddFieldDefn(data_average_field)
 		defn.AddFieldDefn(data_times_field)
 		defn.AddFieldDefn(population_sum_field)
 		defn.AddFieldDefn(data_by_population_field)
@@ -152,10 +165,27 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string):
 		if population_sum > 0:
 			data_by_population = data_times_sum / population_sum
 
+		if hit_sum > 0:
+			data_average = data_sum / hit_sum
+
+		table_data = {
+			"distrito_nome": distrito_nome,
+			"distrito_sigla": distrito_sigla,
+			"data_sum": data_sum,
+			"population_sum": population_sum,
+			"data_times_sum": data_times_sum,
+			"data_average": data_average,
+			"data_by_population": data_by_population,
+			"hit_sum": hit_sum
+		}
+		INDICADORES_EXISTENTES[modality].data_divisions[distrito_nome] = table_data
+
 		new_feature.SetField("data_sum",data_sum)
 		new_feature.SetField("population_sum",population_sum)
 		new_feature.SetField("data_times_sum",data_times_sum)
+		new_feature.SetField("data_average",data_average)
 		new_feature.SetField("data_by_population",data_by_population)
+		new_feature.SetField("hit_sum",hit_sum)
 		new_feature.SetField("NOME_DIST",distrito_nome)
 		new_feature.SetField("SIGLA_DIST",distrito_sigla)
 		new_feature.SetGeometry(distrito_geometry)
@@ -165,7 +195,8 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string):
 	print('')
 	exit(0)
 
-def fetch_modality(features, modality) -> gdal.Dataset:
+def fetch_modality(features, modality, tipo, indicador, minuto) -> gdal.Dataset:
+	global INDICADORES_EXISTENTES
 	feat_to_add = []
 
 	density_field = ogr.FieldDefn("density", ogr.OFTReal )
@@ -186,6 +217,16 @@ def fetch_modality(features, modality) -> gdal.Dataset:
 	
 	if len(feat_to_add) == 0:
 		return
+
+
+	modality = tipo + indicador + minuto
+	human_readable = tipos[tipo] + ' - ' + indicadores[indicador] + ' - ' + minutos[minuto]
+	
+	INDICADORES_EXISTENTES[modality] = {
+		name: modality,
+		human_readable: human_readable,
+		data_divisions: {}
+	}
 
 	file_loc = "./tmp/modalidades/"+modality+".shp"
 	out: gdal.Dataset = gdal.GetDriverByName("ESRI Shapefile").Create(file_loc,0,0,1)
@@ -229,9 +270,8 @@ def fetch_modality(features, modality) -> gdal.Dataset:
 		feature_new.SetGeometry(feature.geometry())
 		
 		layer.CreateFeature(feature_new)
-		pass
 
-	calculate_for_divisions(out, modality)
+	calculate_for_divisions(out, modality, tipo, indicador, minuto)
 	out.Close()
 
 	# gdal.Rasterize(
@@ -261,7 +301,7 @@ def fetch_all_indicators(features,year,transport_mode):
 				modality = tipo + indicador + minuto
 				human_readable = tipos[tipo] + ' - ' + indicadores[indicador] + ' - ' + minutos[minuto]
 				print("Compilando modalidade",modality,'(',human_readable,')')
-				fetch_modality(features, modality)
+				fetch_modality(features, modality, tipo, indicador, minuto)
 	pass
 
 def fetch_for_data(year, transport_mode):
