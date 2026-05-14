@@ -10,7 +10,8 @@ temp_d = './tmp'
 
 os.mkdir("./tmp")
 os.mkdir("./tmp/modalidades")
-os.mkdir("./tmp/modalirasters")
+os.mkdir("./tmp/modalidades_centroides")
+os.mkdir("./tmp/modalidades_distritos")
 
 print(from_d, '->', to_d)
 
@@ -20,7 +21,7 @@ acesso_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/acess_spo_metros.gpkg")
 censo_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/densidade_demografica.shp")
 
 acesso_layer: osgeo.ogr.Layer = acesso_vector.GetLayer(0)
-print(acesso_vector.GetProjectionRef())
+# print(acesso_vector.GetProjectionRef())
 
 tipos = {
 	"CMA": "Indicador de acessibilidade cumulativo ativo",
@@ -81,6 +82,87 @@ print('transport modes = ',transport_modes)
 print('years = ',years)
 print('\nNúmero de features = ',feature_count)
 
+def calculate_for_divisions(features: gdal.Dataset, modality: string):
+	global distritos_vector
+	distritos_layer: ogr.Layer = distritos_vector.GetLayer()
+
+	file_loc = "./tmp/modalidades_distritos/"+modality+".shp"
+	division_out: gdal.Dataset = gdal.GetDriverByName("ESRI Shapefile").Create(file_loc,0,0,1)
+	layer: ogr.Layer = division_out.GetLayer()
+	if not layer:
+		layer = division_out.CreateLayer('l1')
+	centroid_layer: ogr.Layer = division_out.CreateLayer('centroids')
+
+	nome_field = ogr.FieldDefn("NOME_DIST", ogr.OFTString)
+	sigla_field = ogr.FieldDefn("SIGLA_DIST", ogr.OFTString)
+	data_sum_field = ogr.FieldDefn("data_sum", ogr.OFTReal)
+	data_times_field = ogr.FieldDefn("data_times_sum", ogr.OFTReal)
+	population_sum_field = ogr.FieldDefn("population_sum", ogr.OFTReal)
+	data_by_population_field = ogr.FieldDefn("data_by_population", ogr.OFTReal)
+	
+	layer.CreateField(nome_field)
+	layer.CreateField(sigla_field)
+	layer.CreateField(data_sum_field)
+	layer.CreateField(data_times_field)
+	layer.CreateField(population_sum_field)
+	layer.CreateField(data_by_population_field)
+
+	print("Analisando distritos... ",end='')
+	
+	for distrito_feature in distritos_layer:
+		distrito_feature: ogr.Feature
+		distrito_nome = distrito_feature['NOME_DIST']
+		distrito_sigla = distrito_feature['SIGLA_DIST']
+		distrito_geometry: ogr.Geometry = distrito_feature.geometry()
+
+		population_sum = 0
+		data_sum = 0
+		data_times_sum = 0
+
+		print(distrito_nome,end='   ',flush=True)
+		## FIXME Os pontos e os centroids tao saindo em lugares diferentes vou dormir flw
+		feature_layer: ogr.Layer = features.GetLayer()
+		for feature in feature_layer:
+			feature: ogr.Feature
+			geometry: ogr.Geometry = feature.geometry()
+			centroid: ogr.Geometry = geometry.Centroid()
+			centroid_feature = ogr.Feature(ogr.FeatureDefn())
+			centroid_feature.SetGeometry(centroid)
+			centroid_layer.CreateFeature(
+				centroid_feature
+			)
+			if distrito_geometry.Contains(centroid):
+				print('hit')
+				data_sum += feature["data"]
+				population_sum += feature["population"]
+				data_times_sum += feature["data_times"]
+		
+		defn = ogr.FeatureDefn()
+		defn.AddFieldDefn(nome_field)
+		defn.AddFieldDefn(sigla_field)
+		defn.AddFieldDefn(data_sum_field)
+		defn.AddFieldDefn(data_times_field)
+		defn.AddFieldDefn(population_sum_field)
+		defn.AddFieldDefn(data_by_population_field)
+		new_feature = ogr.Feature(defn)
+
+		data_by_population = 0
+		if population_sum > 0:
+			data_by_population = data_times_sum / population_sum
+
+		new_feature.SetField("data_sum",data_sum)
+		new_feature.SetField("population_sum",population_sum)
+		new_feature.SetField("data_times_sum",data_times_sum)
+		new_feature.SetField("data_by_population",data_by_population)
+		new_feature.SetField("NOME_DIST",distrito_nome)
+		new_feature.SetField("SIGLA_DIST",distrito_sigla)
+		new_feature.SetGeometry(distrito_geometry)
+		layer.CreateFeature(new_feature)
+
+	division_out.Close()
+	print('')
+	exit(0)
+
 def fetch_modality(features, modality) -> gdal.Dataset:
 	feat_to_add = []
 
@@ -121,9 +203,9 @@ def fetch_modality(features, modality) -> gdal.Dataset:
 		population = int(feature.GetField('P001'))
 		data = feature.GetField(modality)
 		data_times = population * data
-		print('area=',area)
-		print('population=',population)
-		print('data=',data)
+		# print('area=',area)
+		# print('population=',population)
+		# print('data=',data)
 		
 		density = 0
 		if area > 0:
@@ -147,9 +229,8 @@ def fetch_modality(features, modality) -> gdal.Dataset:
 		layer.CreateFeature(feature_new)
 		pass
 
+	calculate_for_divisions(out, modality)
 	out.Close()
-	exit(0)
-	# return ogr.Open(file_loc)
 
 	# gdal.Rasterize(
 	# 	"./tmp/modalirasters/"+modality+".tiff",
@@ -163,8 +244,6 @@ def fetch_modality(features, modality) -> gdal.Dataset:
 	# 	allTouched=True,
 	# 	attribute='density'
 	# )
-	exit(0)
-
 
 
 def fetch_all_indicators(features,year,transport_mode):
