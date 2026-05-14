@@ -15,7 +15,7 @@ os.mkdir("./tmp/modalidades_distritos")
 
 print(from_d, '->', to_d)
 
-distritos_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/SaoPaulo Distritos com Area.gpkg")
+distritos_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/DISTRITOS_SIRGAS2000.shp")
 # acesso_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/acess_spo.gpkg")
 acesso_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/acess_spo_metros.gpkg")
 censo_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/densidade_demografica.shp")
@@ -92,6 +92,7 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string):
 	if not layer:
 		layer = division_out.CreateLayer('l1')
 	centroid_layer: ogr.Layer = division_out.CreateLayer('centroids')
+	hex_layer: ogr.Layer = division_out.CreateLayer('hex')
 
 	nome_field = ogr.FieldDefn("NOME_DIST", ogr.OFTString)
 	sigla_field = ogr.FieldDefn("SIGLA_DIST", ogr.OFTString)
@@ -128,11 +129,12 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string):
 			centroid: ogr.Geometry = geometry.Centroid()
 			centroid_feature = ogr.Feature(ogr.FeatureDefn())
 			centroid_feature.SetGeometry(centroid)
-			centroid_layer.CreateFeature(
-				centroid_feature
-			)
+			centroid_layer.CreateFeature(centroid_feature)
+			hex_feature: ogr.Feature = ogr.Feature(ogr.FeatureDefn())
+			hex_feature.SetGeometry(geometry)
+			hex_layer.CreateFeature(hex_feature)
 			if distrito_geometry.Contains(centroid):
-				print('hit')
+				# print('hit')
 				data_sum += feature["data"]
 				population_sum += feature["population"]
 				data_times_sum += feature["data_times"]
