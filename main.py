@@ -29,6 +29,8 @@ distritos_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/DISTRITOS_SIRGAS2000.
 acesso_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/acess_spo_metros.gpkg")
 censo_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/densidade_demografica.shp")
 
+cidades_loc = "from/Acesso GIS/SP_Municipios_2024"
+
 acesso_layer: osgeo.ogr.Layer = acesso_vector.GetLayer(0)
 # print(acesso_vector.GetProjectionRef())
 
@@ -67,9 +69,6 @@ minutos = {
 	"120": "120 minutos"
 }
 
-# P001 pessoas no total ...
-# CMAEF30 -> Número de escolas de ensino fundamental acessíveis em até 30 minutos
-
 transport_modes = {
 	'bicycle': 'bicicleta',
 	'walk': 'andando',
@@ -78,6 +77,9 @@ transport_modes = {
 }
 
 years = { '2017': 2017, '2018': 2018, '2019': 2019 }
+
+# P001 pessoas no total ...
+# CMAEF30 -> Número de escolas de ensino fundamental acessíveis em até 30 minutos
 
 # print("Coletando lista de rótulos...")
 
@@ -118,7 +120,7 @@ def make_bar(title,x_axis,y_axis,filename):
 	plt.title("\n".join(textwrap.wrap(title + ' (mais altos)',40)),loc='center',)
 	plt.barh(x_axis[-15:],y_axis[-15:],color='purple',height=1)
 	plt.tight_layout()
-	plt.savefig('to/modalidades_graficos_redux/'+filename+'_most_'+'.png')
+	plt.savefig('to/modalidades_graficos_redux/'+filename+'_most'+'.png')
 
 	plt.figure(figsize=(10, 15), dpi=400)
 	plt.yticks(rotation=15)
@@ -126,7 +128,7 @@ def make_bar(title,x_axis,y_axis,filename):
 	plt.barh(x_axis[:15],y_axis[:15],color='purple',height=1)
 	plt.barh(x_axis[-15:],y_axis[-15:],color='purple',height=1)
 	plt.tight_layout()
-	plt.savefig('to/modalidades_graficos_redux/'+filename+'_both_'+'.png')
+	plt.savefig('to/modalidades_graficos_redux/'+filename+'_both'+'.png')
 
 def gen_table(data, modality: string, modality_description: string, year, transport_mode):
 	dataframe = pd.DataFrame(columns=[
@@ -142,14 +144,29 @@ def gen_table(data, modality: string, modality_description: string, year, transp
 	dataframe = dataframe.sort_values('data_average')
 	make_bar(modality_description + ' normalizado por pontos de referência',dataframe['distrito_nome'],dataframe['data_average'],modality + '_' + year + '_' + transport_mode + '_area')
 
+#FIXME talvez sejam os nomes normalizados q estejam zoando com os dados
+
 def make_map(title, data_loc):
+	global cidades_loc
 	plt.figure()
 	ax: plt.Axes = plt.axes(projection=ccrs.PlateCarree())
 	ax.set_extent([-46.95, -46.25, -23.35, -24.05], crs=ccrs.PlateCarree())
-	ax.coastlines()
+	# ax.coastlines()
+
+	read = shpreader.Reader(cidades_loc)
+	for geometry in read.geometries():
+		shape_feature = ShapelyFeature(geometry,ccrs.PlateCarree(),
+		facecolor=(.75,.75,.75),
+		edgecolor=(.65,.65,.65)
+	)
+		ax.add_feature(shape_feature)
+
 	read = shpreader.Reader(data_loc)
 	for geometry in read.geometries():
-		shape_feature = ShapelyFeature(geometry,ccrs.PlateCarree(), facecolor=(1,0,0))
+		shape_feature = ShapelyFeature(geometry,ccrs.PlateCarree(),
+			facecolor=(0,.8,0),
+			edgecolor=(.05,.05,.05)
+		)
 		ax.add_feature(shape_feature)
 	plt.tight_layout()
 	plt.savefig('coastlines.png')
@@ -235,8 +252,12 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indi
 		if population_sum > 0:
 			data_by_population = data_times_sum / population_sum
 
+		data_average = 0
 		if hit_sum > 0:
 			data_average = data_sum / hit_sum
+
+		print(distrito_nome,'data avg',data_average)
+		print(hit_sum,':',data_sum)
 
 		table_data = {
 			"distrito_nome": distrito_nome,
