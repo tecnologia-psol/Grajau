@@ -2,17 +2,21 @@ from osgeo import gdal, ogr
 import sys, os, textwrap
 import pandas as pd
 from matplotlib import pyplot as plt
+import cartopy.crs as ccrs
+import cartopy.io.shapereader as shpreader
+from cartopy.feature import ShapelyFeature
 
 ogr.UseExceptions()
 
-from_d = sys.argv[1]
-to_d = sys.argv[2]
+from_d = './from'
+to_d = './to'
 temp_d = './tmp'
 
-# TODO peloamor faz constantes
+# TODO peloamor use constantes
 os.mkdir("./tmp")
 os.mkdir("./tmp/modalidades")
 os.mkdir("./tmp/modalidades_distritos")
+os.mkdir("./tmp/modalidades_rasters")
 os.mkdir("./to/modalidades_mapas")
 os.mkdir("./to/modalidades_tabelas")
 os.mkdir("./to/modalidades_graficos")
@@ -80,7 +84,6 @@ years = { '2017': 2017, '2018': 2018, '2019': 2019 }
 feature_count = 0
 for feature in acesso_layer:
 	feature_count+=1
-# 	# print("mode ",feature)
 # 	if transport_modes.get(feature.mode) == None:
 # 		transport_modes[feature.mode] = feature.mode
 # 	pass
@@ -96,10 +99,10 @@ print('\nNúmero de features = ',feature_count)
 INDICADORES_EXISTENTES = {}
 
 def make_bar(title,x_axis,y_axis,filename):
-	plt.figure()
+	plt.figure(figsize=(20,25))
 	plt.barh(x_axis,y_axis,color='purple',height=1)
 	plt.yticks(rotation=15)
-	plt.title("\n".join(textwrap.wrap(title,40)),loc='center',)
+	plt.title("\n".join(textwrap.wrap(title,70)),loc='center',size=30)
 	plt.tight_layout()
 	plt.savefig('to/modalidades_graficos/'+filename+'.png')
 
@@ -132,10 +135,26 @@ def gen_table(data, modality: string, modality_description: string, year, transp
 	])
 	for index in data:
 		dataframe.loc[index] = data[index]
-		
+
 	dataframe.to_excel('./to/modalidades_tabelas/' + modality + '_' + year + '_' + transport_mode +'.xlsx')
 	dataframe = dataframe.sort_values('data_by_population')
-	make_bar(modality_description,dataframe['distrito_nome'],dataframe['data_by_population'],modality + '_' + year + '_' + transport_mode)
+	make_bar(modality_description + ' normalizado por densidade demográfica',dataframe['distrito_nome'],dataframe['data_by_population'],modality + '_' + year + '_' + transport_mode + "_population")
+	dataframe = dataframe.sort_values('data_average')
+	make_bar(modality_description + ' normalizado por pontos de referência',dataframe['distrito_nome'],dataframe['data_average'],modality + '_' + year + '_' + transport_mode + '_area')
+
+def make_map(title, data_loc):
+	plt.figure()
+	ax: plt.Axes = plt.axes(projection=ccrs.PlateCarree())
+	ax.set_extent([-46.95, -46.25, -23.35, -24.05], crs=ccrs.PlateCarree())
+	ax.coastlines()
+	read = shpreader.Reader(data_loc)
+	for geometry in read.geometries():
+		shape_feature = ShapelyFeature(geometry,ccrs.PlateCarree(), facecolor=(1,0,0))
+		ax.add_feature(shape_feature)
+	plt.tight_layout()
+	plt.savefig('coastlines.png')
+	# plt.show()
+	exit(0)
 
 def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indicador, minuto, year, transport_mode):
 	global distritos_vector, INDICADORES_EXISTENTES
@@ -243,10 +262,39 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indi
 		new_feature.SetGeometry(distrito_geometry)
 		layer.CreateFeature(new_feature)
 
-	desc = tipos[tipo] + ' ' + indicadores[indicador].lower() + ' ' + ' em ' + minutos[minuto]
+	desc = (tipos[tipo] + ' ' + indicadores[indicador].lower() + ' ' + ' em ' + minutos[minuto] +
+		' no modo de transporte ' + transport_modes[transport_mode] + ' no ano de ' + year)
 	gen_table(INDICADORES_EXISTENTES[modality]["data_divisions"],modality,desc, year, transport_mode)
+	
 	division_out.Close()
 	print('')
+
+	make_map('Teste123', file_loc)
+
+	# gdal.Rasterize(
+	# 	"./tmp/modalidades_raster/"+modality+'_'+year+'_'+transport_mode+".tiff",
+	# 	file_loc,
+	# 	format='png',
+	# 	outputType=gdal.GDT_Int32,
+	# 	noData=0,
+	# 	initValues=0,
+	# 	xRes=1024,
+	# 	yRes=1024,
+		
+	# 	# allTouched=True,
+	# 	attribute='data_by_population'
+	# )
+	# gdal.RasterizeLayer(
+	# 	min = 1, max = 255,
+	# 	format='png',
+	# 	xRes=1024,
+	# 	yRes=1024,
+	# 	dataset=
+	# )
+	
+	# png_driver = gdal.GetDRiverByName('png')
+	# print(png_driver)
+	# exit(0)
 
 def fetch_modality(features, modality, tipo, indicador, minuto, year, transport_mode) -> gdal.Dataset:
 	global INDICADORES_EXISTENTES
@@ -328,19 +376,6 @@ def fetch_modality(features, modality, tipo, indicador, minuto, year, transport_
 
 	calculate_for_divisions(out, modality, tipo, indicador, minuto, year, transport_mode)
 	out.Close()
-
-	# gdal.Rasterize(
-	# 	"./tmp/modalirasters/"+modality+".tiff",
-	# 	file_loc,
-	# 	format='GTIFF',
-	# 	outputType=gdal.GDT_Byte,
-	# 	noData=-1,
-	# 	initValues=-1,
-	# 	xRes=4096,
-	# 	yRes=4096,
-	# 	allTouched=True,
-	# 	attribute='density'
-	# )
 
 
 def fetch_all_indicators(features,year,transport_mode):

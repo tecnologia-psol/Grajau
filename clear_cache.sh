@@ -1,2 +1,2 @@
 yes | rm -R ./tmp
-yes | rm -R ./to/*
+yes | rm -R ./to/* || mkdir to
