@@ -79,17 +79,17 @@ transport_modes = {
 years = { '2017': 2017, '2018': 2018, '2019': 2019 }
 
 data_average_labels = [
-	( 00000,(.0,0,0)),
-	( 20000,(.1,0,0)),
-	( 40000,(.2,0,0)),
-	( 60000,(.3,0,0)),
-	( 80000,(.4,0,0)),
-	(100000,(.5,0,0)),
-	(120000,(.6,0,0)),
-	(140000,(.7,0,0)),
-	(160000,(.8,0,0)),
-	(180000,(.9,0,0)),
-	(200000,(1 ,0,0))
+	( 0000,(.0,0,0)),
+	( 4000,(.1,0,0)),
+	( 8000,(.2,0,0)),
+	(12000,(.3,0,0)),
+	(16000,(.4,0,0)),
+	(20000,(.5,0,0)),
+	(24000,(.6,0,0)),
+	(28000,(.7,0,0)),
+	(32000,(.8,0,0)),
+	(36000,(.9,0,0)),
+	(40000,(1 ,0,0))
 ]
 
 data_by_population_labels = [
@@ -201,9 +201,11 @@ def make_map(title, data_loc, indicador, data, info_col_name, labels: list(tuple
 		# print(distrito_data[info_col_name])
 		col = None
 		for i in range(0,len(labels)):
-			print(distrito_data.iloc[0][info_col_name])
+			# print(distrito_data.iloc[0][info_col_name])
 			if labels[i][0] > distrito_data.iloc[0][info_col_name]:
 				col = labels[i][1]
+				break
+		print(col)
 		shape_feature = ShapelyFeature(geometry,ccrs.PlateCarree(),
 			facecolor=col or (0,0,1),
 			edgecolor=(.05,.05,.05)
@@ -211,7 +213,7 @@ def make_map(title, data_loc, indicador, data, info_col_name, labels: list(tuple
 		ax.add_feature(shape_feature)
 	
 	plt.tight_layout()
-	plt.savefig('./to/modalidade_mapas' + title + '.png')
+	plt.savefig('./to/modalidades_mapas/' + title + '.png')
 	# plt.show()
 	exit(0)
 
