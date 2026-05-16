@@ -78,6 +78,32 @@ transport_modes = {
 
 years = { '2017': 2017, '2018': 2018, '2019': 2019 }
 
+data_average_labels = [
+	( 00000,(.0,0,0)),
+	( 20000,(.1,0,0)),
+	( 40000,(.2,0,0)),
+	( 60000,(.3,0,0)),
+	( 80000,(.4,0,0)),
+	(100000,(.5,0,0)),
+	(120000,(.6,0,0)),
+	(140000,(.7,0,0)),
+	(160000,(.8,0,0)),
+	(180000,(.9,0,0)),
+	(200000,(1 ,0,0))
+]
+
+data_by_population_labels = [
+	( 00000,(.0,0,0)),
+	( 20000,(.1,0,0)),
+	( 40000,(.2,0,0)),
+	( 60000,(.3,0,0)),
+	( 80000,(.4,0,0)),
+	(100000,(.5,0,0)),
+	(120000,(.6,0,0)),
+	(150000,(.7,0,0)),
+	(180000,(.8,0,0))
+]
+
 # P001 pessoas no total ...
 # CMAEF30 -> Número de escolas de ensino fundamental acessíveis em até 30 minutos
 
@@ -147,7 +173,7 @@ def gen_table(data, modality: string, modality_description: string, year, transp
 
 #FIXME talvez sejam os nomes normalizados q estejam zoando com os dados
 
-def make_map(title, data_loc, indicador, data, info_col_name):
+def make_map(title, data_loc, indicador, data, info_col_name, labels: list(tuple(float,tuple(float,float,float)))):
 	global cidades_loc
 	plt.figure()
 	ax: plt.Axes = plt.axes(projection=ccrs.PlateCarree())
@@ -171,15 +197,21 @@ def make_map(title, data_loc, indicador, data, info_col_name):
 		# print(record.attributes)
 		# print(data)
 		distrito_data = data[data['distrito_nome'] == record.attributes['NOME_DIST']]
-		print(distrito_data)
+		# print(distrito_data.iloc[0])
+		# print(distrito_data[info_col_name])
+		col = None
+		for i in range(0,len(labels)):
+			print(distrito_data.iloc[0][info_col_name])
+			if labels[i][0] > distrito_data.iloc[0][info_col_name]:
+				col = labels[i][1]
 		shape_feature = ShapelyFeature(geometry,ccrs.PlateCarree(),
-			facecolor=(.5,.8,0),
+			facecolor=col or (0,0,1),
 			edgecolor=(.05,.05,.05)
 		)
 		ax.add_feature(shape_feature)
 	
 	plt.tight_layout()
-	plt.savefig('coastlines.png')
+	plt.savefig('./to/modalidade_mapas' + title + '.png')
 	# plt.show()
 	exit(0)
 
@@ -301,14 +333,16 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indi
 	print('')
 	dataframe = gen_table(INDICADORES_EXISTENTES[modality]["data_divisions"],modality,desc, year, transport_mode)
 
+	global data_average_labels, data_by_population_labels
+
 	make_map(
 		modality + '_' + year + '_' + transport_mode + "_average",
-		file_loc, modality, dataframe, "data_average"
+		file_loc, modality, dataframe, "data_average", data_average_labels
 	)
 
 	make_map(
 		modality + '_' + year + '_' + transport_mode + "_population",
-		file_loc, modality, dataframe, "data_by_population"
+		file_loc, modality, dataframe, "data_by_population", data_by_population_labels
 	)
 
 	# gdal.Rasterize(
