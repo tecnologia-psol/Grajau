@@ -78,19 +78,55 @@ transport_modes = {
 
 years = { '2017': 2017, '2018': 2018, '2019': 2019 }
 
-data_average_labels = [
-	( 0000,(.0,0,0)),
-	( 4000,(.1,0,0)),
-	( 8000,(.2,0,0)),
-	(12000,(.3,0,0)),
-	(16000,(.4,0,0)),
-	(20000,(.5,0,0)),
-	(24000,(.6,0,0)),
-	(28000,(.7,0,0)),
-	(32000,(.8,0,0)),
-	(36000,(.9,0,0)),
-	(40000,(1 ,0,0))
-]
+label_max = 150000
+data_average_labels = []
+# label_n = 20
+
+def interpolate_col(value):
+	# interpola de vermelho, pra amarelo, pra verde no range [0,1]
+	return (min(max(2 - value,0),1), min(max(value,0),1), 0)
+
+d = 1
+max_d = 2**15
+while d < label_max:
+	data_average_labels.append(
+		(d,interpolate_col(d/max_d))
+	)
+	d = d * 2
+print(data_average_labels)
+
+# for i in range(0,label_n):
+# 	# interpola de vermelho, pra amarelo, pra verde
+# 	data_average_labels.append((
+# 		label_max*i/(label_n-1),
+# 		((
+# 		min(max(2 - i / float(label_n/2),0),1),
+# 		min(max(i / float(label_n/2),0),1),
+# 		0
+# 	))))
+
+# data_average_labels = [
+# 	( 0000, (1 ,.0,.0)),
+# 	( 5000, (1 ,.1,.0)),
+# 	(10000, (1 ,.2,.0)),
+# 	(15000, (1 ,.3,.0)),
+# 	(20000, (1 ,.4,.0)),
+# 	(25000, (1 ,.5,.0)),
+# 	(30000, (1 ,.6,.0)),
+# 	(35000, (1 ,.7,.0)),
+# 	(40000, (1 ,.8,.0)),
+# 	(45000, (1 ,.9,.0)),
+# 	(50000, (.9,1 ,.0)),
+# 	(55000, (.8,1 ,.0)),
+# 	(60000, (.7,1 ,.0)),
+# 	(65000, (.6,1 ,.0)),
+# 	(70000, (.5,1 ,.0)),
+# 	(75000, (.4,1 ,.0)),
+# 	(80000, (.3,1 ,.0)),
+# 	(85000, (.2,1 ,.0)),
+# 	(90000, (.1,1 ,.0)),
+# 	(95000, ( 0,1 ,.0))
+# ]
 
 data_by_population_labels = [
 	( 00000,(.0,0,0)),
