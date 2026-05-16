@@ -78,16 +78,25 @@ transport_modes = {
 
 years = { '2017': 2017, '2018': 2018, '2019': 2019 }
 
+# TODO como os indicadores passivos e ativos são baseados em pessoas,
+#  talvez nem seja necessário fazer a multiplicação por população
+
 label_max = 150000
-data_average_labels = []
 # label_n = 20
 
 def interpolate_col(value):
 	# interpola de vermelho, pra amarelo, pra verde no range [0,1]
-	return (min(max(2 - value,0),1), min(max(value,0),1), 0)
+	ret = (min(max(2 - value,0),1), min(max(value,0),1), 0)
+	print(value,ret)
+	return ret
+
+def get_label(value,min_v,max_V):
+	pass
+
+data_average_labels = []
 
 d = 1
-max_d = 2**15
+max_d = 2**13
 while d < label_max:
 	data_average_labels.append(
 		(d,interpolate_col(d/max_d))
@@ -128,18 +137,24 @@ print(data_average_labels)
 # 	(95000, ( 0,1 ,.0))
 # ]
 
-data_by_population_labels = [
-	( 00000,(.0,0,0)),
-	( 20000,(.1,0,0)),
-	( 40000,(.2,0,0)),
-	( 60000,(.3,0,0)),
-	( 80000,(.4,0,0)),
-	(100000,(.5,0,0)),
-	(120000,(.6,0,0)),
-	(150000,(.7,0,0)),
-	(180000,(.8,0,0))
-]
+data_by_population_labels = []
 
+imin = 1000
+imax = 10000000
+i = imin
+c = 0
+while i < imax:
+	data_average_labels.append(
+		(i,interpolate_col(c/5))
+	)
+	i *= 10
+	c +=1
+
+DATA_AVG_LABEL = "data_avg"
+DATA_SUM_LABEL = "data_sum"
+DATA_TIMES_SUM_LABEL = "data_tsum"
+POPULATION_SUM_LABEL = "population"
+DATA_BY_POPULATION = "data_popul"
 # P001 pessoas no total ...
 # CMAEF30 -> Número de escolas de ensino fundamental acessíveis em até 30 minutos
 
@@ -194,17 +209,17 @@ def make_bar(title,x_axis,y_axis,filename):
 
 def gen_table(data, modality: string, modality_description: string, year, transport_mode):
 	dataframe = pd.DataFrame(columns=[
-		'distrito_nome','distrito_sigla','data_times_sum','data_average',
-		'data_by_population','hit_sum'
+		'distrito_nome','distrito_sigla',DATA_TIMES_SUM_LABEL,DATA_AVG_LABEL,
+		DATA_BY_POPULATION,'hit_sum'
 	])
 	for index in data:
 		dataframe.loc[index] = data[index]
 
 	dataframe.to_excel('./to/modalidades_tabelas/' + modality + '_' + year + '_' + transport_mode +'.xlsx')
-	dataframe = dataframe.sort_values('data_by_population')
-	make_bar(modality_description + ' normalizado por densidade demográfica',dataframe['distrito_nome'],dataframe['data_by_population'],modality + '_' + year + '_' + transport_mode + "_population")
-	dataframe = dataframe.sort_values('data_average')
-	make_bar(modality_description + ' normalizado por pontos de referência',dataframe['distrito_nome'],dataframe['data_average'],modality + '_' + year + '_' + transport_mode + '_area')
+	dataframe = dataframe.sort_values(DATA_BY_POPULATION)
+	make_bar(modality_description + ' normalizado por densidade demográfica',dataframe['distrito_nome'],dataframe[DATA_BY_POPULATION],modality + '_' + year + '_' + transport_mode + "_population")
+	dataframe = dataframe.sort_values(DATA_AVG_LABEL)
+	make_bar(modality_description + ' normalizado por pontos de referência',dataframe['distrito_nome'],dataframe[DATA_AVG_LABEL],modality + '_' + year + '_' + transport_mode + '_area')
 	return dataframe
 
 #FIXME talvez sejam os nomes normalizados q estejam zoando com os dados
@@ -234,6 +249,7 @@ def make_map(title, data_loc, indicador, data, info_col_name, labels: list(tuple
 		# print(data)
 		distrito_data = data[data['distrito_nome'] == record.attributes['NOME_DIST']]
 		# print(distrito_data.iloc[0])
+		# print(distrito_data)
 		# print(distrito_data[info_col_name])
 		col = None
 		for i in range(0,len(labels)):
@@ -241,7 +257,7 @@ def make_map(title, data_loc, indicador, data, info_col_name, labels: list(tuple
 			if labels[i][0] > distrito_data.iloc[0][info_col_name]:
 				col = labels[i][1]
 				break
-		print(col)
+		# print(col)
 		shape_feature = ShapelyFeature(geometry,ccrs.PlateCarree(),
 			facecolor=col or (0,0,1),
 			edgecolor=(.05,.05,.05)
@@ -267,12 +283,12 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indi
 
 	nome_field = ogr.FieldDefn("NOME_DIST", ogr.OFTString)
 	sigla_field = ogr.FieldDefn("SIGLA_DIST", ogr.OFTString)
-	data_sum_field = ogr.FieldDefn("data_sum", ogr.OFTReal)
+	data_sum_field = ogr.FieldDefn(DATA_SUM_LABEL, ogr.OFTReal)
 	hit_sum_field = ogr.FieldDefn("hit_sum", ogr.OFTReal)
-	data_times_field = ogr.FieldDefn("data_times_sum", ogr.OFTReal)
-	data_average_field = ogr.FieldDefn("data_average",ogr.OFTReal)
-	population_sum_field = ogr.FieldDefn("population_sum", ogr.OFTReal)
-	data_by_population_field = ogr.FieldDefn("data_by_population", ogr.OFTReal)
+	data_times_field = ogr.FieldDefn(DATA_TIMES_SUM_LABEL, ogr.OFTReal)
+	data_average_field = ogr.FieldDefn(DATA_AVG_LABEL,ogr.OFTReal)
+	population_sum_field = ogr.FieldDefn(POPULATION_SUM_LABEL, ogr.OFTReal)
+	data_by_population_field = ogr.FieldDefn(DATA_BY_POPULATION, ogr.OFTReal)
 	
 	layer.CreateField(nome_field)
 	layer.CreateField(sigla_field)
@@ -343,21 +359,21 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indi
 		table_data = {
 			"distrito_nome": distrito_nome,
 			"distrito_sigla": distrito_sigla,
-			"data_sum": data_sum,
-			"population_sum": population_sum,
-			"data_times_sum": data_times_sum,
-			"data_average": data_average,
-			"data_by_population": data_by_population,
+			DATA_SUM_LABEL: data_sum,
+			POPULATION_SUM_LABEL: population_sum,
+			DATA_TIMES_SUM_LABEL: data_times_sum,
+			DATA_AVG_LABEL: data_average,
+			DATA_BY_POPULATION: data_by_population,
 			"hit_sum": hit_sum
 		}
 		INDICADORES_EXISTENTES[modality]["data_divisions"][distrito_count] = table_data
 		distrito_count += 1
 		
-		new_feature.SetField("data_sum",data_sum)
-		new_feature.SetField("population_sum",population_sum)
-		new_feature.SetField("data_times_sum",data_times_sum)
-		new_feature.SetField("data_average",data_average)
-		new_feature.SetField("data_by_population",data_by_population)
+		new_feature.SetField(DATA_SUM_LABEL,data_sum)
+		new_feature.SetField(POPULATION_SUM_LABEL,population_sum)
+		new_feature.SetField(DATA_TIMES_SUM_LABEL,data_times_sum)
+		new_feature.SetField(DATA_AVG_LABEL,data_average)
+		new_feature.SetField(DATA_BY_POPULATION,data_by_population)
 		new_feature.SetField("hit_sum",hit_sum)
 		new_feature.SetField("NOME_DIST",distrito_nome)
 		new_feature.SetField("SIGLA_DIST",distrito_sigla)
@@ -375,12 +391,12 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indi
 
 	make_map(
 		modality + '_' + year + '_' + transport_mode + "_average",
-		file_loc, modality, dataframe, "data_average", data_average_labels
+		file_loc, modality, dataframe, DATA_AVG_LABEL, data_average_labels
 	)
 
 	make_map(
 		modality + '_' + year + '_' + transport_mode + "_population",
-		file_loc, modality, dataframe, "data_by_population", data_by_population_labels
+		file_loc, modality, dataframe, DATA_BY_POPULATION, data_by_population_labels
 	)
 
 	# gdal.Rasterize(
@@ -394,7 +410,7 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indi
 	# 	yRes=1024,
 		
 	# 	# allTouched=True,
-	# 	attribute='data_by_population'
+	# 	attribute=DATA_BY_POPULATION
 	# )
 	# gdal.RasterizeLayer(
 	# 	min = 1, max = 255,
