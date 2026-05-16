@@ -86,7 +86,7 @@ label_max = 150000
 
 def interpolate_col(value):
 	# interpola de vermelho, pra amarelo, pra verde no range [0,1]
-	ret = (min(max(2 - value,0),1), min(max(value,0),1), 0)
+	ret = (min(max(2 - value*2,0),1), min(max(2*value,0),1), 0)
 	print(value,ret)
 	return ret
 
@@ -94,61 +94,21 @@ def get_label(value,min_v,max_V):
 	pass
 
 data_average_labels = []
-
-d = 1
-max_d = 2**13
-while d < label_max:
-	data_average_labels.append(
-		(d,interpolate_col(d/max_d))
-	)
-	d = d * 2
-print(data_average_labels)
-
-# for i in range(0,label_n):
-# 	# interpola de vermelho, pra amarelo, pra verde
-# 	data_average_labels.append((
-# 		label_max*i/(label_n-1),
-# 		((
-# 		min(max(2 - i / float(label_n/2),0),1),
-# 		min(max(i / float(label_n/2),0),1),
-# 		0
-# 	))))
-
-# data_average_labels = [
-# 	( 0000, (1 ,.0,.0)),
-# 	( 5000, (1 ,.1,.0)),
-# 	(10000, (1 ,.2,.0)),
-# 	(15000, (1 ,.3,.0)),
-# 	(20000, (1 ,.4,.0)),
-# 	(25000, (1 ,.5,.0)),
-# 	(30000, (1 ,.6,.0)),
-# 	(35000, (1 ,.7,.0)),
-# 	(40000, (1 ,.8,.0)),
-# 	(45000, (1 ,.9,.0)),
-# 	(50000, (.9,1 ,.0)),
-# 	(55000, (.8,1 ,.0)),
-# 	(60000, (.7,1 ,.0)),
-# 	(65000, (.6,1 ,.0)),
-# 	(70000, (.5,1 ,.0)),
-# 	(75000, (.4,1 ,.0)),
-# 	(80000, (.3,1 ,.0)),
-# 	(85000, (.2,1 ,.0)),
-# 	(90000, (.1,1 ,.0)),
-# 	(95000, ( 0,1 ,.0))
-# ]
-
-data_by_population_labels = []
-
 imin = 1000
-imax = 10000000
+imax = 1000000
 i = imin
 c = 0
 while i < imax:
 	data_average_labels.append(
-		(i,interpolate_col(c/5))
+		(i,interpolate_col(c/4))
 	)
 	i *= 10
 	c +=1
+
+data_by_population_labels = []
+for i in range(1,20):
+	col = ( i*100.0/20.0, interpolate_col(i/20.0) )
+	data_by_population_labels.append(col)
 
 DATA_AVG_LABEL = "data_avg"
 DATA_SUM_LABEL = "data_sum"
@@ -229,6 +189,8 @@ def make_map(title, data_loc, indicador, data, info_col_name, labels: list(tuple
 	plt.figure()
 	ax: plt.Axes = plt.axes(projection=ccrs.PlateCarree())
 	ax.set_extent([-46.95, -46.25, -23.35, -24.05], crs=ccrs.PlateCarree())
+	plt.title(title)
+
 	# ax.coastlines()
 
 	read = shpreader.Reader(cidades_loc)
@@ -254,6 +216,7 @@ def make_map(title, data_loc, indicador, data, info_col_name, labels: list(tuple
 		col = None
 		for i in range(0,len(labels)):
 			# print(distrito_data.iloc[0][info_col_name])
+			# print(labels[i],'--<',distrito_data.iloc[0][info_col_name])
 			if labels[i][0] > distrito_data.iloc[0][info_col_name]:
 				col = labels[i][1]
 				break
@@ -267,7 +230,7 @@ def make_map(title, data_loc, indicador, data, info_col_name, labels: list(tuple
 	plt.tight_layout()
 	plt.savefig('./to/modalidades_mapas/' + title + '.png')
 	# plt.show()
-	exit(0)
+	# exit(0)
 
 def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indicador, minuto, year, transport_mode):
 	global distritos_vector, INDICADORES_EXISTENTES
@@ -346,13 +309,15 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indi
 
 		data_by_population = 0
 		if population_sum > 0:
-			data_by_population = data_times_sum / population_sum
+			# Não precisa ser o data_times pois os indicadores ja são
+			# enviesados de acordo com a população
+			data_by_population = data_sum / population_sum
 
 		data_average = 0
 		if hit_sum > 0:
 			data_average = data_sum / hit_sum
 
-		# FIXME !!!!!!!
+		# FIXME data average tá saindo errado no shapefile !!!!!!!
 		# print(distrito_nome,'data avg',data_average)
 		# print(hit_sum,':',data_sum)
 
@@ -389,15 +354,17 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indi
 
 	global data_average_labels, data_by_population_labels
 
-	make_map(
-		modality + '_' + year + '_' + transport_mode + "_average",
-		file_loc, modality, dataframe, DATA_AVG_LABEL, data_average_labels
-	)
+	# make_map(
+	# 	modality + '_' + year + '_' + transport_mode + "_average",
+	# 	file_loc, modality, dataframe, DATA_AVG_LABEL, data_average_labels
+	# )
 
 	make_map(
 		modality + '_' + year + '_' + transport_mode + "_population",
 		file_loc, modality, dataframe, DATA_BY_POPULATION, data_by_population_labels
 	)
+
+	exit(0)
 
 	# gdal.Rasterize(
 	# 	"./tmp/modalidades_raster/"+modality+'_'+year+'_'+transport_mode+".tiff",
