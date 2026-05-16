@@ -1,5 +1,5 @@
 from osgeo import gdal, ogr
-import sys, os, textwrap
+import sys, os, textwrap, math
 import pandas as pd
 from matplotlib import pyplot as plt
 import cartopy.crs as ccrs
@@ -25,11 +25,11 @@ os.mkdir("./to/modalidades_graficos_redux")
 print(from_d, '->', to_d)
 
 distritos_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/DISTRITOS_SIRGAS2000.shp")
-# acesso_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/acess_spo.gpkg")
-acesso_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/acess_spo_metros.gpkg")
-censo_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/densidade_demografica.shp")
+acesso_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/acess_spo.gpkg")
+# acesso_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/acess_spo_metros.gpkg")
+# censo_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/densidade_demografica.shp")
 
-cidades_loc = "from/Acesso GIS/SP_Municipios_2024"
+cidades_loc = "from/Acesso GIS/SP_Municipios_2025.shp"
 
 acesso_layer: osgeo.ogr.Layer = acesso_vector.GetLayer(0)
 # print(acesso_vector.GetProjectionRef())
@@ -143,10 +143,11 @@ def gen_table(data, modality: string, modality_description: string, year, transp
 	make_bar(modality_description + ' normalizado por densidade demográfica',dataframe['distrito_nome'],dataframe['data_by_population'],modality + '_' + year + '_' + transport_mode + "_population")
 	dataframe = dataframe.sort_values('data_average')
 	make_bar(modality_description + ' normalizado por pontos de referência',dataframe['distrito_nome'],dataframe['data_average'],modality + '_' + year + '_' + transport_mode + '_area')
+	return dataframe
 
 #FIXME talvez sejam os nomes normalizados q estejam zoando com os dados
 
-def make_map(title, data_loc):
+def make_map(title, data_loc, indicador, data, info_col_name):
 	global cidades_loc
 	plt.figure()
 	ax: plt.Axes = plt.axes(projection=ccrs.PlateCarree())
@@ -156,18 +157,27 @@ def make_map(title, data_loc):
 	read = shpreader.Reader(cidades_loc)
 	for geometry in read.geometries():
 		shape_feature = ShapelyFeature(geometry,ccrs.PlateCarree(),
-		facecolor=(.75,.75,.75),
-		edgecolor=(.65,.65,.65)
-	)
+			facecolor=(.75,.75,.75),
+			edgecolor=(.65,.65,.65)
+		)
 		ax.add_feature(shape_feature)
 
-	read = shpreader.Reader(data_loc)
-	for geometry in read.geometries():
+	read: shpreader.BasicReader = shpreader.Reader(data_loc)
+	# print(read.records())
+	
+	for record in read.records():
+		geometry = record.geometry
+		# print(record._fields)
+		# print(record.attributes)
+		# print(data)
+		distrito_data = data[data['distrito_nome'] == record.attributes['NOME_DIST']]
+		print(distrito_data)
 		shape_feature = ShapelyFeature(geometry,ccrs.PlateCarree(),
-			facecolor=(0,.8,0),
+			facecolor=(.5,.8,0),
 			edgecolor=(.05,.05,.05)
 		)
 		ax.add_feature(shape_feature)
+	
 	plt.tight_layout()
 	plt.savefig('coastlines.png')
 	# plt.show()
@@ -256,8 +266,9 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indi
 		if hit_sum > 0:
 			data_average = data_sum / hit_sum
 
-		print(distrito_nome,'data avg',data_average)
-		print(hit_sum,':',data_sum)
+		# FIXME !!!!!!!
+		# print(distrito_nome,'data avg',data_average)
+		# print(hit_sum,':',data_sum)
 
 		table_data = {
 			"distrito_nome": distrito_nome,
@@ -285,12 +296,20 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indi
 
 	desc = (tipos[tipo] + ' ' + indicadores[indicador].lower() + ' ' + ' em ' + minutos[minuto] +
 		' no modo de transporte ' + transport_modes[transport_mode] + ' no ano de ' + year)
-	gen_table(INDICADORES_EXISTENTES[modality]["data_divisions"],modality,desc, year, transport_mode)
 	
 	division_out.Close()
 	print('')
+	dataframe = gen_table(INDICADORES_EXISTENTES[modality]["data_divisions"],modality,desc, year, transport_mode)
 
-	make_map('Teste123', file_loc)
+	make_map(
+		modality + '_' + year + '_' + transport_mode + "_average",
+		file_loc, modality, dataframe, "data_average"
+	)
+
+	make_map(
+		modality + '_' + year + '_' + transport_mode + "_population",
+		file_loc, modality, dataframe, "data_by_population"
+	)
 
 	# gdal.Rasterize(
 	# 	"./tmp/modalidades_raster/"+modality+'_'+year+'_'+transport_mode+".tiff",
