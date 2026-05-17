@@ -81,34 +81,34 @@ years = { '2017': 2017, '2018': 2018, '2019': 2019 }
 # TODO como os indicadores passivos e ativos são baseados em pessoas,
 #  talvez nem seja necessário fazer a multiplicação por população
 
-label_max = 150000
-# label_n = 20
+def linear_interpolate(min_,max_,value):
+	# print(min_,max_,value,"o-o",float((max_-min_) * value + min_))
+	return float((max_-min_) * value + min_)
 
-def interpolate_col(value):
-	# interpola de vermelho, pra amarelo, pra verde no range [0,1]
-	ret = (min(max(2 - value*2,0),1), min(max(2*value,0),1), 0)
-	print(value,ret)
-	return ret
-
-def get_label(value,min_v,max_V):
-	pass
-
-data_average_labels = []
-imin = 1000
-imax = 1000000
-i = imin
-c = 0
-while i < imax:
-	data_average_labels.append(
-		(i,interpolate_col(c/4))
+def tuple_interpolate(min_, max_, value):
+	return (
+		linear_interpolate(min_[0],max_[0],value),
+		linear_interpolate(min_[1],max_[1],value),
+		linear_interpolate(min_[2],max_[2],value)
 	)
-	i *= 10
-	c +=1
 
-data_by_population_labels = []
-for i in range(1,20):
-	col = ( i*100.0/20.0, interpolate_col(i/20.0) )
-	data_by_population_labels.append(col)
+def get_color_for_population(val):
+	# 0-100
+	keyframes = [
+		(  0,(1,0 ,0)),
+		(  2,(1,.5,0)),
+		(  5,(1,1 ,0)),
+		( 10,(0,1 ,0)),
+		(100,(0,.2,0))
+	]
+	for i in range(1, len(keyframes)):
+		if keyframes[i-1][0] <= val and val <= keyframes[i][0]:
+			return tuple_interpolate(keyframes[i-1][1],keyframes[i][1],val/keyframes[len(keyframes)-1][0])
+	return (0,0,255)
+
+def get_color_for_average():
+
+	return(0,0,255)
 
 DATA_AVG_LABEL = "data_avg"
 DATA_SUM_LABEL = "data_sum"
@@ -184,7 +184,7 @@ def gen_table(data, modality: string, modality_description: string, year, transp
 
 #FIXME talvez sejam os nomes normalizados q estejam zoando com os dados
 
-def make_map(title, data_loc, indicador, data, info_col_name, labels: list(tuple(float,tuple(float,float,float)))):
+def make_map(title, data_loc, indicador, data, info_col_name, color_function):
 	global cidades_loc
 	plt.figure()
 	ax: plt.Axes = plt.axes(projection=ccrs.PlateCarree())
@@ -193,6 +193,7 @@ def make_map(title, data_loc, indicador, data, info_col_name, labels: list(tuple
 
 	# ax.coastlines()
 
+	# Coloca os municipios de São Paulo no fundo
 	read = shpreader.Reader(cidades_loc)
 	for geometry in read.geometries():
 		shape_feature = ShapelyFeature(geometry,ccrs.PlateCarree(),
@@ -206,23 +207,11 @@ def make_map(title, data_loc, indicador, data, info_col_name, labels: list(tuple
 	
 	for record in read.records():
 		geometry = record.geometry
-		# print(record._fields)
-		# print(record.attributes)
-		# print(data)
 		distrito_data = data[data['distrito_nome'] == record.attributes['NOME_DIST']]
-		# print(distrito_data.iloc[0])
-		# print(distrito_data)
-		# print(distrito_data[info_col_name])
-		col = None
-		for i in range(0,len(labels)):
-			# print(distrito_data.iloc[0][info_col_name])
-			# print(labels[i],'--<',distrito_data.iloc[0][info_col_name])
-			if labels[i][0] > distrito_data.iloc[0][info_col_name]:
-				col = labels[i][1]
-				break
-		# print(col)
+		color = get_color_for_population(distrito_data.iloc[0][info_col_name])
+		print(color)
 		shape_feature = ShapelyFeature(geometry,ccrs.PlateCarree(),
-			facecolor=col or (0,0,1),
+			facecolor=color or (0,0,1),
 			edgecolor=(.05,.05,.05)
 		)
 		ax.add_feature(shape_feature)
@@ -361,7 +350,7 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indi
 
 	make_map(
 		modality + '_' + year + '_' + transport_mode + "_population",
-		file_loc, modality, dataframe, DATA_BY_POPULATION, data_by_population_labels
+		file_loc, modality, dataframe, DATA_BY_POPULATION, get_color_for_population
 	)
 
 	exit(0)
