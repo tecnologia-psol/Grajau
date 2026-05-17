@@ -1,7 +1,8 @@
 from osgeo import gdal, ogr
 import sys, os, textwrap, math
 import pandas as pd
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt, colors
+import matplotlib
 import cartopy.crs as ccrs
 import cartopy.io.shapereader as shpreader
 from cartopy.feature import ShapelyFeature
@@ -104,35 +105,25 @@ def get_color_for_population(val):
 	for i in range(1, len(keyframes)):
 		if keyframes[i-1][0] <= val and val <= keyframes[i][0]:
 			return tuple_interpolate(keyframes[i-1][1],keyframes[i][1],val/keyframes[len(keyframes)-1][0])
-	return (0,0,255)
+	return (0,0,1)
 
 def get_color_for_average():
 
-	return(0,0,255)
+	return(0,0,1)
 
 DATA_AVG_LABEL = "data_avg"
 DATA_SUM_LABEL = "data_sum"
 DATA_TIMES_SUM_LABEL = "data_tsum"
 POPULATION_SUM_LABEL = "population"
 DATA_BY_POPULATION = "data_popul"
+
 # P001 pessoas no total ...
 # CMAEF30 -> Número de escolas de ensino fundamental acessíveis em até 30 minutos
-
-# print("Coletando lista de rótulos...")
 
 feature_count = 0
 for feature in acesso_layer:
 	feature_count+=1
-# 	if transport_modes.get(feature.mode) == None:
-# 		transport_modes[feature.mode] = feature.mode
-# 	pass
-# 	year_s = str(int(feature.year))
-# 	if years.get(year_s) == None:
-# 		years[year_s] = int(feature.year)
-# 	pass
 
-# print('transport modes = ',transport_modes)
-# print('years = ',years)
 print('\nNúmero de features = ',feature_count)
 
 INDICADORES_EXISTENTES = {}
@@ -184,13 +175,13 @@ def gen_table(data, modality: string, modality_description: string, year, transp
 
 #FIXME talvez sejam os nomes normalizados q estejam zoando com os dados
 
-def make_map(title, data_loc, indicador, data, info_col_name, color_function):
+def make_map(filename, title, data_loc, indicador, data, info_col_name, color_function):
 	global cidades_loc
-	plt.figure()
+	plt.figure(dpi=200)
 	ax: plt.Axes = plt.axes(projection=ccrs.PlateCarree())
 	ax.set_extent([-46.95, -46.25, -23.35, -24.05], crs=ccrs.PlateCarree())
-	plt.title(title)
-
+	# plt.title(title)
+	plt.title("\n".join(textwrap.wrap(title,70)),loc='center',size=12)
 	# ax.coastlines()
 
 	# Coloca os municipios de São Paulo no fundo
@@ -216,10 +207,14 @@ def make_map(title, data_loc, indicador, data, info_col_name, color_function):
 		)
 		ax.add_feature(shape_feature)
 	
+	plt.figure()
+	fig, ax = plt.subplot()
+	cmap = colors.ListedColormap([(255,0,0),(0,255,0)])
+	plt.colorbar(cmap=cmap,ax=ax)
 	plt.tight_layout()
-	plt.savefig('./to/modalidades_mapas/' + title + '.png')
-	# plt.show()
-	# exit(0)
+	plt.savefig('./to/modalidades_mapas/' + filename + '.png')
+	plt.show()
+	exit(0)
 
 def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indicador, minuto, year, transport_mode):
 	global distritos_vector, INDICADORES_EXISTENTES
@@ -343,13 +338,13 @@ def calculate_for_divisions(features: gdal.Dataset, modality: string, tipo, indi
 
 	global data_average_labels, data_by_population_labels
 
-	# make_map(
-	# 	modality + '_' + year + '_' + transport_mode + "_average",
-	# 	file_loc, modality, dataframe, DATA_AVG_LABEL, data_average_labels
-	# )
+	make_map(
+		modality + '_' + year + '_' + transport_mode + "_average", desc + ' normalizado por ponto de referência',
+		file_loc, modality, dataframe, DATA_AVG_LABEL, get_color_for_population
+	)
 
 	make_map(
-		modality + '_' + year + '_' + transport_mode + "_population",
+		modality + '_' + year + '_' + transport_mode + "_population", desc + ' normalizado por população',
 		file_loc, modality, dataframe, DATA_BY_POPULATION, get_color_for_population
 	)
 
