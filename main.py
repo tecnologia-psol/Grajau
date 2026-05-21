@@ -6,6 +6,7 @@ import matplotlib
 import cartopy.crs as ccrs
 import cartopy.io.shapereader as shpreader
 from cartopy.feature import ShapelyFeature
+import data_vis, geo_utils, data_man
 
 ogr.UseExceptions()
 
@@ -30,7 +31,7 @@ acesso_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/acess_spo.gpkg")
 # acesso_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/acess_spo_metros.gpkg")
 # censo_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/densidade_demografica.shp")
 
-cidades_loc = "from/Acesso GIS/SP_Municipios_2025.shp"
+cidades_loc = "from/Acesso GIS/SP_Municipios_2024.shp"
 
 acesso_layer: osgeo.ogr.Layer = acesso_vector.GetLayer(0)
 # print(acesso_vector.GetProjectionRef())
@@ -490,6 +491,12 @@ def fetch_for_data(year, transport_mode):
 	print(len(matching_feats),'features encontradas')
 	fetch_all_indicators(matching_feats,year,transport_mode)
 
-for year in years:
-	for transport_mode in transport_modes:
-		fetch_for_data(year, transport_mode)
+# for year in years:
+# 	for transport_mode in transport_modes:
+# 		fetch_for_data(year, transport_mode)
+
+cats = geo_utils.separate_categories(acesso_layer, distritos_vector.GetLayer(0))
+
+for key in cats:
+	category = cats[key]
+	geo_utils.compile_category(category, distritos_vector.GetLayer(0), key)
