@@ -83,7 +83,7 @@ def generate_distr_fields():
 	data_by_population_field = ogr.FieldDefn(DATA_BY_POPULATION_LABEL, ogr.OFTReal)
 
 	return [
-		nome_field, sigla_field, data_sum_field, data_times_field,
+		nome_field, sigla_field, data_sum_field, data_times_field, hit_sum_field,
 		data_average_field, population_sum_field, data_by_population_field
 	]
 
@@ -118,6 +118,17 @@ def gen_simple_feature(data_value, reference_feature, district_name) -> ogr.Feat
 	feature_new.SetGeometry(reference_feature.geometry())
 	return feature_new
 
+def gen_distr_feature(geometry, info_tab):
+	fields = generate_distr_fields()
+	defn = ogr.FeatureDefn()
+	for field in fields:
+		defn.AddFieldDefn(field)
+	feature_new: ogr.Feature = ogr.Feature(defn)
+	for field in info_tab:
+		feature_new.SetField(field,info_tab[field])
+	feature_new.SetGeometry(geometry)
+	return feature_new
+
 def compile_category(hexes: ogr.Layer, districts: ogr.Layer, category_name: string) -> gdal.Dataset:
 	print(f"Calculando estatísticas distritais para a modalidade {category_name}")
 
@@ -130,7 +141,9 @@ def compile_category(hexes: ogr.Layer, districts: ogr.Layer, category_name: stri
 		layer.CreateField(field)
 
 	d_data = {}
+	d_geometries = {}
 	for district_feature in districts:
+		district_feature: ogr.Feature
 		d_data[district_feature['NOME_DIST']] = {
 			DATA_SUM_LABEL: 0,
 			POPULATION_SUM_LABEL: 0,
@@ -140,6 +153,7 @@ def compile_category(hexes: ogr.Layer, districts: ogr.Layer, category_name: stri
 			DISTRICT_NAME_LABEL: district_feature['NOME_DIST'],
 			DISTRICT_ABBR_LABEL: district_feature['SIGLA_DIST']
 		}
+		d_geometries[district_feature['NOME_DIST']] = district_feature.geometry().Clone()
 
 	miss_count = 0
 
@@ -153,12 +167,19 @@ def compile_category(hexes: ogr.Layer, districts: ogr.Layer, category_name: stri
 		d_data[dname][HIT_SUM_LABEL] += 1
 		d_data[dname][POPULATION_SUM_LABEL] += hex_feature[POPULATION_LABEL]
 
+	
+
 	for index in d_data:
+		# Em tese não devem nunca ser 0, se é esse o caso provavelmente os de cima também são 0
 		if d_data[index][HIT_SUM_LABEL] == 0: d_data[index][HIT_SUM_LABEL] = 1
 		if d_data[index][POPULATION_SUM_LABEL] == 0: d_data[index][POPULATION_SUM_LABEL] = 1
 		
 		d_data[index][DATA_AVG_LABEL] = d_data[index][DATA_SUM_LABEL] / d_data[index][HIT_SUM_LABEL]
 		d_data[index][DATA_BY_POPULATION_LABEL] = d_data[index][DATA_SUM_LABEL] / d_data[index][POPULATION_SUM_LABEL]
+
+		feature_to_add = gen_distr_feature(d_geometries[index],d_data[index])
+		layer.CreateFeature(feature_to_add)
+			
 
 	dataset.Close()	
 
@@ -176,9 +197,10 @@ def separate_categories(hexes: ogr.Layer, districts: ogr.Layer):
 				district_name = district['NOME_DIST']
 				break
 		c+=1
-		if c > 100: break
+		if c > 1000: break
 		print(f'Processando feature {c}/{count} ({(100*c/count):.2f})% ({len(datasets)} datasets)')
 		feature: ogr.Feature
+		fields = gen_hex_fields()
 		derived_features = []
 		for tipo in tipos:
 			for indicador in indicadores:
@@ -193,7 +215,11 @@ def separate_categories(hexes: ogr.Layer, districts: ogr.Layer):
 					data_value = feature.GetFieldAsString(feat_index)
 					if data_value == '': continue
 					datasets[f_name] = datasets.get(f_name) or gdal.GetDriverByName("ESRI Shapefile").Create(file_loc,0,0,1)
-					layer: ogr.Layer = datasets[f_name].GetLayer() or datasets[f_name].CreateLayer('l1')
+					layer: ogr.Layer = datasets[f_name].GetLayer()
+					if not layer:
+						layer = datasets[f_name].CreateLayer('l1')
+						for field in fields: layer.CreateField(field)
+						
 					file_locations[f_name] = file_locations.get(f_name) or file_loc
 					layer.CreateFeature(gen_simple_feature(float(data_value),feature,district_name or 'IDK'))
 	

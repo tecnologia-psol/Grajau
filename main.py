@@ -499,4 +499,4 @@ cats = geo_utils.separate_categories(acesso_layer, distritos_vector.GetLayer(0))
 
 for key in cats:
 	category = cats[key]
-	geo_utils.compile_category(category, distritos_vector.GetLayer(0), key)
+	geo_utils.compile_category(category.GetLayer(0), distritos_vector.GetLayer(0), key)
