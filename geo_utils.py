@@ -1,6 +1,6 @@
 import re as regex
 from osgeo import gdal, ogr
-
+import data_vis, data_man
 
 tipos = {
 	"CMA": "Indicador de acessibilidade cumulativo ativo",
@@ -129,12 +129,13 @@ def gen_distr_feature(geometry, info_tab):
 	feature_new.SetGeometry(geometry)
 	return feature_new
 
-def compile_category(hexes: ogr.Layer, districts: ogr.Layer, category_name: string) -> gdal.Dataset:
+def compile_category(hexes: ogr.Layer, districts: ogr.Layer, category_name: string) -> string:
 	print(f"Calculando estatísticas distritais para a modalidade {category_name}")
 
 	distr_fields = generate_distr_fields()
-	file_loc = 'tmp/modalidades_distritos/' + category_name + '_d.shp'
-	dataset: gdal.Dataset = gdal.GetDriverByName("ESRI Shapefile").Create(file_loc,0,0,1)
+	shapefile_loc = 'tmp/modalidades_distritos/' + category_name + '_d.shp'
+	
+	dataset: gdal.Dataset = gdal.GetDriverByName("ESRI Shapefile").Create(shapefile_loc,0,0,1)
 	layer: ogr.Layer = dataset.GetLayer() or dataset.CreateLayer('l1')
 	
 	for field in distr_fields:
@@ -167,8 +168,6 @@ def compile_category(hexes: ogr.Layer, districts: ogr.Layer, category_name: stri
 		d_data[dname][HIT_SUM_LABEL] += 1
 		d_data[dname][POPULATION_SUM_LABEL] += hex_feature[POPULATION_LABEL]
 
-	
-
 	for index in d_data:
 		# Em tese não devem nunca ser 0, se é esse o caso provavelmente os de cima também são 0
 		if d_data[index][HIT_SUM_LABEL] == 0: d_data[index][HIT_SUM_LABEL] = 1
@@ -179,9 +178,16 @@ def compile_category(hexes: ogr.Layer, districts: ogr.Layer, category_name: stri
 
 		feature_to_add = gen_distr_feature(d_geometries[index],d_data[index])
 		layer.CreateFeature(feature_to_add)
-			
+	
+	# TODO: queue em uma thread separada
+	data_table = data_man.gen_table(d_data,category_name)
+	data_table = data_table.sort_values(DATA_AVG_LABEL)
+	data_vis.make_bar('Teste123',data_table[DISTRICT_NAME_LABEL],data_table[DATA_AVG_LABEL],f'{category_name}_avg')
+	data_table = data_table.sort_values(DATA_BY_POPULATION_LABEL)
+	data_vis.make_bar('Teste123',data_table[DISTRICT_NAME_LABEL],data_table[DATA_BY_POPULATION_LABEL],f'{category_name}_pop')
 
-	dataset.Close()	
+	dataset.Close()
+	return shapefile_loc
 
 def separate_categories(hexes: ogr.Layer, districts: ogr.Layer):
 	print("Separando categorias")
@@ -197,7 +203,7 @@ def separate_categories(hexes: ogr.Layer, districts: ogr.Layer):
 				district_name = district['NOME_DIST']
 				break
 		c+=1
-		if c > 1000: break
+		if c > 250: break
 		print(f'Processando feature {c}/{count} ({(100*c/count):.2f})% ({len(datasets)} datasets)')
 		feature: ogr.Feature
 		fields = gen_hex_fields()

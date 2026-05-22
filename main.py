@@ -496,7 +496,9 @@ def fetch_for_data(year, transport_mode):
 # 		fetch_for_data(year, transport_mode)
 
 cats = geo_utils.separate_categories(acesso_layer, distritos_vector.GetLayer(0))
+dist_stats = {}
 
 for key in cats:
 	category = cats[key]
-	geo_utils.compile_category(category.GetLayer(0), distritos_vector.GetLayer(0), key)
+	loc = geo_utils.compile_category(category.GetLayer(0), distritos_vector.GetLayer(0), key)
+	

@@ -1,3 +1,6 @@
+import matplotlib.pyplot as plt
+import textwrap
+
 def make_bar(title,x_axis,y_axis,filename):
 	plt.figure(figsize=(20,25))
 	plt.barh(x_axis,y_axis,color='purple',height=1)
@@ -5,6 +8,7 @@ def make_bar(title,x_axis,y_axis,filename):
 	plt.title("\n".join(textwrap.wrap(title,70)),loc='center',size=30)
 	plt.tight_layout()
 	plt.savefig('to/modalidades_graficos/'+filename+'.png')
+	plt.close()
 
 	plt.figure()
 	plt.yticks(rotation=15)
@@ -12,6 +16,7 @@ def make_bar(title,x_axis,y_axis,filename):
 	plt.barh(x_axis[:15],y_axis[:15],color='purple',height=1)
 	plt.tight_layout()
 	plt.savefig('to/modalidades_graficos_redux/'+filename+'_least_'+'.png')
+	plt.close()
 
 	plt.figure()
 	plt.yticks(rotation=15)
@@ -19,6 +24,7 @@ def make_bar(title,x_axis,y_axis,filename):
 	plt.barh(x_axis[-15:],y_axis[-15:],color='purple',height=1)
 	plt.tight_layout()
 	plt.savefig('to/modalidades_graficos_redux/'+filename+'_most'+'.png')
+	plt.close()
 
 	plt.figure(figsize=(10, 15), dpi=400)
 	plt.yticks(rotation=15)
@@ -27,10 +33,10 @@ def make_bar(title,x_axis,y_axis,filename):
 	plt.barh(x_axis[-15:],y_axis[-15:],color='purple',height=1)
 	plt.tight_layout()
 	plt.savefig('to/modalidades_graficos_redux/'+filename+'_both'+'.png')
+	plt.close()
 
 
 def linear_interpolate(min_,max_,value):
-	# print(min_,max_,value,"o-o",float((max_-min_) * value + min_))
 	return float((max_-min_) * value + min_)
 
 def tuple_interpolate(min_, max_, value):
@@ -57,7 +63,7 @@ def get_color_for_population(val):
 def get_color_for_average(val):
 	return(0,0,1)
 
-def make_map(filename, title, data_loc, indicador, data, info_col_name, color_function):
+def make_map(title, data_loc, indicador, data, info_col_name, color_function):
 	global cidades_loc
 	plt.figure(dpi=200)
 	ax: plt.Axes = plt.axes(projection=ccrs.PlateCarree())
