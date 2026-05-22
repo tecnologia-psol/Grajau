@@ -180,13 +180,17 @@ def compile_category(hexes: ogr.Layer, districts: ogr.Layer, category_name: stri
 		layer.CreateFeature(feature_to_add)
 	
 	# TODO: queue em uma thread separada
+	# Ou sla só salva a lista e faz no final
 	data_table = data_man.gen_table(d_data,category_name)
 	data_table = data_table.sort_values(DATA_AVG_LABEL)
-	data_vis.make_bar('Teste123',data_table[DISTRICT_NAME_LABEL],data_table[DATA_AVG_LABEL],f'{category_name}_avg')
+	data_vis.make_bar(f'{category_name}_avg',data_table[DISTRICT_NAME_LABEL],data_table[DATA_AVG_LABEL],f'{category_name}_avg')
 	data_table = data_table.sort_values(DATA_BY_POPULATION_LABEL)
-	data_vis.make_bar('Teste123',data_table[DISTRICT_NAME_LABEL],data_table[DATA_BY_POPULATION_LABEL],f'{category_name}_pop')
+	data_vis.make_bar(f'{category_name}_pop',data_table[DISTRICT_NAME_LABEL],data_table[DATA_BY_POPULATION_LABEL],f'{category_name}_pop')
 
 	dataset.Close()
+
+	data_vis.make_map(category_name,category_name,shapefile_loc,data_table,DATA_BY_POPULATION_LABEL,data_vis.get_color_for_population)
+
 	return shapefile_loc
 
 def separate_categories(hexes: ogr.Layer, districts: ogr.Layer):
@@ -203,7 +207,7 @@ def separate_categories(hexes: ogr.Layer, districts: ogr.Layer):
 				district_name = district['NOME_DIST']
 				break
 		c+=1
-		if c > 250: break
+		# if c > 250: break
 		print(f'Processando feature {c}/{count} ({(100*c/count):.2f})% ({len(datasets)} datasets)')
 		feature: ogr.Feature
 		fields = gen_hex_fields()

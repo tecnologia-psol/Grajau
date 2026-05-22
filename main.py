@@ -3,9 +3,6 @@ import sys, os, textwrap, math
 import pandas as pd
 from matplotlib import pyplot as plt, colors
 import matplotlib
-import cartopy.crs as ccrs
-import cartopy.io.shapereader as shpreader
-from cartopy.feature import ShapelyFeature
 import data_vis, geo_utils, data_man
 
 ogr.UseExceptions()

@@ -1,5 +1,11 @@
 import matplotlib.pyplot as plt
 import textwrap
+import cartopy.crs as ccrs
+import cartopy.io.shapereader as shpreader
+from cartopy.feature import ShapelyFeature
+import geo_utils
+
+cidades_loc = "from/Acesso GIS/SP_Municipios_2024.shp"
 
 def make_bar(title,x_axis,y_axis,filename):
 	plt.figure(figsize=(20,25))
@@ -63,7 +69,7 @@ def get_color_for_population(val):
 def get_color_for_average(val):
 	return(0,0,1)
 
-def make_map(title, data_loc, indicador, data, info_col_name, color_function):
+def make_map(filename, title, vector_loc, data, info_col_name, color_function):
 	global cidades_loc
 	plt.figure(dpi=200)
 	ax: plt.Axes = plt.axes(projection=ccrs.PlateCarree())
@@ -79,11 +85,11 @@ def make_map(title, data_loc, indicador, data, info_col_name, color_function):
 		)
 		ax.add_feature(shape_feature)
 
-	read: shpreader.BasicReader = shpreader.Reader(data_loc)
+	read: shpreader.BasicReader = shpreader.Reader(vector_loc)
 	
 	for record in read.records():
 		geometry = record.geometry
-		distrito_data = data[data['distrito_nome'] == record.attributes['NOME_DIST']]
+		distrito_data = data[data[geo_utils.DISTRICT_NAME_LABEL] == record.attributes[geo_utils.DISTRICT_NAME_LABEL]]
 		color = get_color_for_population(distrito_data.iloc[0][info_col_name])
 		shape_feature = ShapelyFeature(geometry,ccrs.PlateCarree(),
 			facecolor=color or (0,0,1),
@@ -93,3 +99,4 @@ def make_map(title, data_loc, indicador, data, info_col_name, color_function):
 
 	plt.tight_layout()
 	plt.savefig('./to/modalidades_mapas/' + filename + '.png')
+	plt.close()
