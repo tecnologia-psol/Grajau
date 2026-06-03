@@ -14,11 +14,19 @@
 
 \usepackage{circuitikz}
 \usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+
+\graphicspath{ {~/EDPET/Grajau/relatorio/assets/} }
+\usepackage[outercaption]{sidecap}
+% Sabe lá deus pq ele não acha a path relativa
 \usepackage[portuguese]{babel}
 \usepackage{fancyhdr}
 
 \usepackage{amsmath}
 \usepackage{relsize}
+\usepackage{listings}
+\usepackage{dirtree}
 
 \usepackage[T1]{fontenc}
 \usepackage[DefaultFeatures={Ligatures=Common}]{plex-otf}
@@ -57,6 +65,7 @@ serviços e quais estão mais abandonados pelo serviço público.
 No total, os indicadores regionais foram cruzadas com as bordas distritais para tentarmos encontrar indicadores que
 mostrem a necessidade de uma instituição de ensino superior no Grajaú, eu tentei o máximo encontrar uma
 metodologia que viabilizasse essa classificação.
+\pagebreak
 \section{Os dados}
 \subsection{Dados de Acessibilidade}
 \par
@@ -75,9 +84,15 @@ engano, essas são explicadas no dicionário de variáveis\cite{dict} e na próp
 
 O shapefile contendo os distritos da cidade são essenciais para fazer esse cálculo, como base eu usei
 os próprios delimitadores disponibilizados pela prefeitura de São Paulo \cite{districts}.
+Importante notar que os distritos na base de dados da prefeitura não estão projetados no SIRGAS2000,
+então eu mesmo reprojetei eles manualmente.
 
 \subsection{Cidades de São Paulo}
-// TODO
+
+Esse shapefile é mais cosmético, ele têm todos os municípios de São Paulo, uso ele primariamente
+para desenhar as cidades no fundo dos mapas. Esses dados foram disponibilizados pelo Instituto Brasileiro
+de Geografia e Estatística (IBGE) \cite{cities}
+
 \pagebreak
 \section{Metodologia}
 \subsection{Computação dos dados distritais}
@@ -97,6 +112,20 @@ de forma geral cada dado dado de um hexágono adiciona seu respectivo acumulador
 naturalmete cria viéses para distritos com mais hexágonos, ou seja, aqueles com maior área, assim é
 necessário normalizar esses dados de alguma maneira.
 
+\subsection{Modalidades}
+\par
+Para cada determinado local de estudo existem cerca de 12 hexágonos, o que muda entre cada um é a
+data de captura, o meio de transporte e possivelmente seu valor de minutos. Além disso, em cada hexagono
+existem cerca de 40 pontos de dados, o script divide todos esses dados em 'modalidades', uma determinada
+modalidade é a combinação dessa separação dos hexágonos e cada dado individual de cada hexágono, hexágonos que 
+possuem a mesma modalidade mas são geograficamente diferentes pertencem ao mesmo mapa.
+
+\par
+A modalidade é central para a compilação dos dados, uma vez que o programa segrega esses dados em modalidades,
+por exemplo, o arquivo  \verb|CMATA90_2019_car| nos diz que esse dado é acessibilidade, por carro, em 90 minutos,
+para modalidade TA (instituições de ensino superior), no CMA, ou seja, ele representa o número de instituições
+de ensino superior acessíveis a 90 minutos de carro.
+
 \subsection{Normalização por Número de Capturas}
 \par
 A normalização por número de capturas é bem direta, seja $D$ um distrito, $H$ o conjunto de todos 
@@ -104,9 +133,9 @@ hexágonos para uma determinada modalidade, $n$ o número de hexágonos dentro d
 de um determinado hexágono, a nossa modalidade normalizada por número de capturas se dá por\footnote{
 	No caso a notação $\text{c}(h) \in D$ é uma simplificação, implica que o centróide de h está dentro de $D$.
 }:
- \large{\[
-\frac 1 {|\{\text{c}(h) \in D\}|}\sum_{ \text{c}(h) \in D} \text{M}( \text h)
-\]}
+ {\large{\[
+\frac 1 {|\{\text{c}(h) \in D\}|}\sum_{ \text{c}(h) \in D} \text{M}(h)
+\]}}
 \subsection{Normalização por População}
 \par
 Para os indicadores de tipo CMA, existe um claro viés envolvido; Como o CMA conta o número de estabelecimentos
@@ -117,11 +146,17 @@ normalização por população do distrito. Esse mostra a disparidade entre cada
 de pessoas. Seja $\text p(d)$ a população de um determinado hexágono, o indicador normalizado por
 população se dá por
 \[
-{\Bigg(\sum_{\text{c}(h) \in D} \text p(h)\Bigg)}^{-1} \sum_{\text{c}(h) \in D} \text{M}( \text h)
+{\Bigg(\sum_{\text{c}(h) \in D} \text p(h)\Bigg)}^{-1} \sum_{\text{c}(h) \in D} \text{M}(h)
 \]
 essa média tende a ser um pouco melhor para os indicadores CMA, mas ainda sim não é perfeita.
 \subsection{Limitações}
-
+\par 
+Importante notar que nenhuma das normalizações são 100% corretas, mas somente aproximações dos 
+valores de acessibilidade dos distritos que podem ser usada de forma comparativa, mas que, ao meu
+ver, não representam nenhum indicador tangível, para indicadores de tipo CMA, embora a normalização
+por população seja boa para este propósito, a acessibilidade de em um distrito também é afetada
+pelos distritos em volta.
+\pagebreak
 \section{Repositório do Código}
 \par
 Todo o código fonte do projeto, as classes geradoras de dados e o arquivo LaTeX desse
@@ -129,46 +164,129 @@ documento são software livre, estão disponíveis em \url{github.com/tecnologia
 pelo próprio perfil da Setorial.
 \subsection{Licença}
 \par
-Todo o código do projeto está sob a licença GPL3.
-
-\subsubsection{Makefile}
+Todo o código do projeto está sob a licença GPL3, que é uma licença copyleft forte. Este arquivo e
+os assets que não são gerados pelo código python estão sob a licença Creative Commons
+Attribution-ShareAlike 4.0 International.
+\subsection{Makefile}
 \par
 No próprio repositório eu deixei um makefile com as tarefas de compilação e 
 execução do código, para executar um makefile basta ter o \href{https://www.gnu.org/software/make/}{make},
 as tarefas disponíveis são:
-\par
 \begin{itemize}
 \item\verb|make report| compila o pdf em LaTeX.
 \item\verb|make run| roda o \verb|main.py| e compila os dados.
 \item\verb|make clear| remove os arquivos gerados.
 \end{itemize}
-\subsubsection{Ambiente Python}
+\par
+Importante notar que o makefile usa o comando \verb|yes|, o que pode talvez tornar ele
+incompatível com o ambiente Windows.
+\subsection{Ambiente Python}
 \par É necessária uma versão razoávelmente recente do Python 3, além disso, são necessários
 os seguintes pacotes:
 \begin{itemize}
 \item\href{https://gdal.org/en/stable/}{gdal} (API de Python): Biblioteca de geoprocessamento
 \item\href{https://matplotlib.org/}{matplotlib}: Biblioteca de gráficos
 \item\href{https://pandas.pydata.org/}{pandas}: Gerenciador de Tabelas
+\end{itemize}
 
 \par Como eu uso Arch\footnote{btw} todos os meus pacotes no ambiente python são gerenciados
 pelo Pacman, mas em outros sistemas operacionais esse não é o caso, é necessário somente saber
 se essas dependências estão instaladas no ambiente Pyhon, da minha experiência o GDAL é notóriamente
 difícil instalar no Windows, recomendo se possível tentar compilar em uma distribuição Linux.
-\subsubsection{Ambiente de Execução}
+\subsection{Ambiente de Execução}
 \par Antes de executar precisa ser verificado se os dados estão corretamente colocados na pasta `from',
 em geral a estrutura da pasta precisa ser assim:
 
-\subsubsection{Execução}
-\par Para 
-\end{itemize}
+\subsection{Execução}
+\par Para executar, eu recomendo usar o makefile, mas o arquivo python pode também ser
+executado diretamente por meio dos comandos
+\begin{lstlisting}
+yes | rm -R ./tmp || true
+yes | rm -R ./to/* || true
+python main.py
+\end{lstlisting}
 
 \subsubsection{Dependências LaTeX}
 
+\par Assim como meu ambiente Python, eu ambiente LaTeX também é gerenciado pelo Pacman, em outros
+sistemas o gerenciamento pode ser diferente, para compilar o relatório em LaTeX são necessárias
+as bibliotecas:
+\begin{itemize}
+\item url
+\item hyperref
+\item circuitikz
+\item graphicx
+\item caption
+\item subcaption
+\item babel (portuguese)
+\item fancyhdr
+\item uramsmathl
+\item relsize
+\item listings
+\item dirtree
+\item fontenc
+\item hyperref
+\item sidecap
+\end{itemize}
+
 \subsection{Estrutura do Código}
+
+\pagebreak
 \section{Resultados}
+\subsection{Estrutura do Repositório de Dados}
+\par
+O repositório de dados é organizado da seguinte forma:
+\dirtree{%
+.1 raíz.
+.2 tmp\DTcomment{Arquivos geográficos}.
+.3 modalidades\DTcomment{Arquivos geográficos dividindo hexágonos de cada modalidade.}.
+.3 modalidades\_distritos\DTcomment{Modalidades divididas em distritos.}.
+.2 to\DTcomment{Arquivos processados (imagens e tabelas)}.
+.2 modalidades\_graficos\DTcomment{Graficos com todos os distritos}.
+.3 modalidades\_graficos\_redux\DTcomment{Gráficos distritos nos extremos}.
+.3 modalidades\_graficos\_tabelas\DTcomment{Tabelas de dados}.
+.3 modalidades\_graficos\_mapas\DTcomment{Mapas com estatísticas}.
+}
+
 \subsection{Gráficos}
+\subsubsection{Normalizações}
+\par
+Cada modalidade computada tem dois gráficos principais, o normalizado por capturas e
+o normalizado por população, posfixados por \verb|avg| e \verb|pop| respectivamente, por
+exemplo, para a modalidade \verb|CMATA15_2017_walk|, existem os gráficos
+\verb|CMATA15_2017_walk_avg.png| e os gráficos \verb|CMATA15_2017_walk_pop.png|.
+
+\pagebreak
+\begin{figure}
+\centering
+
+\begin{subfigure}{.5\textwidth}
+\centering
+\includegraphics[width=.4\linewidth]{CMATA15_2017_walk_avg.png}
+\caption{CMATA15\_2017\_walk.png}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+\centering
+\includegraphics[width=.4\linewidth]{CMATA15_2017_walk_pop.png}
+\caption{CMATA15\_2017\_walk.png}
+\end{subfigure}
+
+\caption{CMATA15\_2017\_walk}
+\end{figure}
+\pagebreak
+
+\subsubsection{Gráficos Redux}
+\par
+Os gráficos redux são similares aos anteriores, mas filtrados, para cada gráfico normal vão existir
+3 gráficos redux, um \verb|least| que tem somente os 15 distritos com os menores indicadores,
+\verb|most| que tem os 15 distritos com os maiores indicadores, e o \verb|both| que tem os
+distritos que aparecem no most e no least.
+
 \subsection{Tabelas}
+
 \subsection{Mapas}
+
+\pagebreak
 \section{Conclusões}
 
 \begin{thebibliography}{9}
@@ -178,5 +296,7 @@ Dicionário de Variáveis (2025) \emph{IPEA} disponível em \url{https://ipea.gi
 Acessibilidade Urbana (2025) \emph{IPEA} disponível em \url{https://www.ipea.gov.br/acessooportunidades/}.
 \bibitem{districts}
 Distritos do Município de São Paulo (2015) \emph{Prefeitura de São Paulo} disponível em \url{https://dados.prefeitura.sp.gov.br/dataset/distritos}
+\bibitem{cities}
+Malha Municipal (2025) \emph{IBGE} disponível em \url{https://www.ibge.gov.br/geociencias/organizacao-do-territorio/malhas-territoriais/15774-malhas.html}
 \end{thebibliography}
 \end{document}
