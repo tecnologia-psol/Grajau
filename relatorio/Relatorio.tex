@@ -44,7 +44,7 @@
 \listoftables
 \pagebreak
 
-\fancyfoot[RO]{\textbf{PSolTEC}}
+\fancyfoot[RO]{\textit{Psol Tecnologia}}
 
 \section{Introdução}
 \par
@@ -99,11 +99,11 @@ necessário normalizar esses dados de alguma maneira.
 \subsection{Normalização por Número de Capturas}
 \par
 A normalização por número de capturas é bem direta, seja $D$ um distrito, $H$ o conjunto de todos 
-hexágonos para uma determinada modalidade, $n$ o número de hexágonos dentro do distrito, a nossa
-modalidade normalizada por número de capturas se dá por:
-\[ \mathlarger
-\sum_{\text h \in D} \text{modalidade}( \text h)
-\]
+hexágonos para uma determinada modalidade, $n$ o número de hexágonos dentro do distrito e $M(h)$ o dado
+de um determinado hexágono, a nossa modalidade normalizada por número de capturas se dá por:
+ \large{\[
+\frac 1 {|\{h \in D\}|}\sum_{ h \in D} \text{M}( \text h)
+\]}
 \subsection{Normalização por População}
 \par
 \section{Repositório do Código}
