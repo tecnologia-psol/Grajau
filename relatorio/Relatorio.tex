@@ -16,9 +16,14 @@
 \usepackage[portuguese]{babel}
 \usepackage{fancyhdr}
 
+\usepackage{amsmath}
+\usepackage{relsize}
+
 \usepackage[T1]{fontenc}
-\usepackage[DefaultFeatures={Ligatures=Common}]{plex-otf} %
-% \renewcommand*\familydefault{\sfdefault} %% Only if the base font of the document is to be sans serif
+\usepackage[DefaultFeatures={Ligatures=Common}]{plex-otf}
+% \renewcommand*\familydefault{\sfdefault} 
+
+\setmathfont{latinmodern-math.otf}
 
 \usepackage{hyperref}
 \hypersetup{
@@ -39,7 +44,7 @@
 \listoftables
 \pagebreak
 
-\fancyfoot[LO]{PSolTEC}
+\fancyfoot[RO]{\textbf{PSolTEC}}
 
 \section{Introdução}
 \par
@@ -71,10 +76,36 @@ O shapefile contendo os distritos da cidade são essenciais para fazer esse cál
 os próprios delimitadores disponibilizados pela prefeitura de São Paulo \cite{districts}.
 
 \subsection{Cidades de São Paulo}
+// TODO
+\pagebreak
 \section{Metodologia}
 \subsection{Computação dos dados distritais}
-\subsection{Normalização por População}
+
+\par
+Cada distrito intercede com algum número de feições hexagonais no dataset, minha meta foi fazer
+um método relativamente direto de computar essa intersecção. Existem algoritmos relativamente
+complexos que computam o quão um determinado polígono está dentro de outro, mas esses são caros
+computacionalmente, minha solução foi um pouco mais brusca, um hexágono percente a um distrito se 
+e somente se o seu centróide geográfico (que no caso do hexágono é bem no meio) estiver dentro do distrito.
+Alguns poucos hexágonos infelizmente acabaram ficando sem nenhum distrito, um efeito colateral
+que eu julgo que não vale a pena corrigir no momento.
+
+\par
+Uma questão muito importante é computar como essas estatístitcas são comutadas para cada distrito,
+de forma geral cada dado dado de um hexágono adiciona seu respectivo acumulador no distrito, isso
+naturalmete cria viéses para distritos com mais hexágonos, ou seja, aqueles com maior área, assim é
+necessário normalizar esses dados de alguma maneira.
+
 \subsection{Normalização por Número de Capturas}
+\par
+A normalização por número de capturas é bem direta, seja $D$ um distrito, $H$ o conjunto de todos 
+hexágonos para uma determinada modalidade, $n$ o número de hexágonos dentro do distrito, a nossa
+modalidade normalizada por número de capturas se dá por:
+\[ \mathlarger
+\sum_{\text h \in D} \text{modalidade}( \text h)
+\]
+\subsection{Normalização por População}
+\par
 \section{Repositório do Código}
 \subsection{Licença}
 \subsection{Dependências Externas e Setup}
