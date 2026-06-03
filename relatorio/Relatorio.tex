@@ -10,6 +10,7 @@
 \date{\today}
 
 \usepackage{url}
+\usepackage{hyperref}
 
 \usepackage{circuitikz}
 \usepackage{graphicx}
@@ -100,15 +101,69 @@ necessário normalizar esses dados de alguma maneira.
 \par
 A normalização por número de capturas é bem direta, seja $D$ um distrito, $H$ o conjunto de todos 
 hexágonos para uma determinada modalidade, $n$ o número de hexágonos dentro do distrito e $M(h)$ o dado
-de um determinado hexágono, a nossa modalidade normalizada por número de capturas se dá por:
+de um determinado hexágono, a nossa modalidade normalizada por número de capturas se dá por\footnote{
+	No caso a notação $\text{c}(h) \in D$ é uma simplificação, implica que o centróide de h está dentro de $D$.
+}:
  \large{\[
-\frac 1 {|\{h \in D\}|}\sum_{ h \in D} \text{M}( \text h)
+\frac 1 {|\{\text{c}(h) \in D\}|}\sum_{ \text{c}(h) \in D} \text{M}( \text h)
 \]}
 \subsection{Normalização por População}
 \par
+Para os indicadores de tipo CMA, existe um claro viés envolvido; Como o CMA conta o número de estabelecimentos
+acessíveis em um determinado número de minutos, ele vai tender sempre a ser maior nos distritos mais populosos,
+pois, naturalmente, a gestão pública vai manter mais escolas, hospitais e delegacias nos distritos onde
+vivem mais pessoas, para isso, além da normalização por número de capturas, também foi medida a 
+normalização por população do distrito. Esse mostra a disparidade entre cada indicador e o número
+de pessoas. Seja $\text p(d)$ a população de um determinado hexágono, o indicador normalizado por
+população se dá por
+\[
+{\Bigg(\sum_{\text{c}(h) \in D} \text p(h)\Bigg)}^{-1} \sum_{\text{c}(h) \in D} \text{M}( \text h)
+\]
+essa média tende a ser um pouco melhor para os indicadores CMA, mas ainda sim não é perfeita.
+\subsection{Limitações}
+
 \section{Repositório do Código}
+\par
+Todo o código fonte do projeto, as classes geradoras de dados e o arquivo LaTeX desse
+documento são software livre, estão disponíveis em \url{github.com/tecnologia-psol/Grajau},
+pelo próprio perfil da Setorial.
 \subsection{Licença}
-\subsection{Dependências Externas e Setup}
+\par
+Todo o código do projeto está sob a licença GPL3.
+
+\subsubsection{Makefile}
+\par
+No próprio repositório eu deixei um makefile com as tarefas de compilação e 
+execução do código, para executar um makefile basta ter o \href{https://www.gnu.org/software/make/}{make},
+as tarefas disponíveis são:
+\par
+\begin{itemize}
+\item\verb|make report| compila o pdf em LaTeX.
+\item\verb|make run| roda o \verb|main.py| e compila os dados.
+\item\verb|make clear| remove os arquivos gerados.
+\end{itemize}
+\subsubsection{Ambiente Python}
+\par É necessária uma versão razoávelmente recente do Python 3, além disso, são necessários
+os seguintes pacotes:
+\begin{itemize}
+\item\href{https://gdal.org/en/stable/}{gdal} (API de Python): Biblioteca de geoprocessamento
+\item\href{https://matplotlib.org/}{matplotlib}: Biblioteca de gráficos
+\item\href{https://pandas.pydata.org/}{pandas}: Gerenciador de Tabelas
+
+\par Como eu uso Arch\footnote{btw} todos os meus pacotes no ambiente python são gerenciados
+pelo Pacman, mas em outros sistemas operacionais esse não é o caso, é necessário somente saber
+se essas dependências estão instaladas no ambiente Pyhon, da minha experiência o GDAL é notóriamente
+difícil instalar no Windows, recomendo se possível tentar compilar em uma distribuição Linux.
+\subsubsection{Ambiente de Execução}
+\par Antes de executar precisa ser verificado se os dados estão corretamente colocados na pasta `from',
+em geral a estrutura da pasta precisa ser assim:
+
+\subsubsection{Execução}
+\par Para 
+\end{itemize}
+
+\subsubsection{Dependências LaTeX}
+
 \subsection{Estrutura do Código}
 \section{Resultados}
 \subsection{Gráficos}
