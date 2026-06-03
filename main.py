@@ -72,6 +72,7 @@ transport_modes = {
 
 years = { '2017': 2017, '2018': 2018, '2019': 2019 }
 
+#compila as modalidades antes da filtragem
 cats = geo_utils.separate_categories(acesso_layer, distritos_vector.GetLayer(0))
 dist_stats = {}
 

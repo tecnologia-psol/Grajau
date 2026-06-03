@@ -207,7 +207,7 @@ def separate_categories(hexes: ogr.Layer, districts: ogr.Layer):
 				district_name = district['NOME_DIST']
 				break
 		c+=1
-		print(f'Processando feature {c}/{count} ({(100*c/count):.2f})% ({len(datasets)} datasets)')
+		print(f'Processando feature {c}/{count} ({(100*c/count):.2f}%) ({len(datasets)} datasets)')
 		feature: ogr.Feature
 		fields = gen_hex_fields()
 		derived_features = []
