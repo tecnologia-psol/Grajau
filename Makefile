@@ -1,6 +1,7 @@
 get_deps:
 	echo "TODO"
 run:
+	make clear
 	python main.py
 report:
 	make clear

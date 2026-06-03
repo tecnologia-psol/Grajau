@@ -1,6 +1,6 @@
 \documentclass{article}
 
-\title{Estudo: Comparando indíces de acessibilidade entre distritos do município de São Paulo.}
+\title{Indíces de acessibilidade entre distritos do município de São Paulo.}
 \author{
 	Setorial de Tecnologia e Soberania Digital do PSOL \and
 	Júlio César Borges de Oliveira Sampaio
@@ -8,6 +8,8 @@
 
 % \date{Junho de 2026}
 \date{\today}
+
+\usepackage{url}
 
 \usepackage{circuitikz}
 \usepackage{graphicx}
@@ -19,18 +21,38 @@
 
 \begin{document}
 
-\begin{titlepage}           
-\end{titlepage}
-
 \maketitle
+\pagebreak
 \tableofcontents
 \listoffigures
 \listoftables
+\pagebreak
 
 \section{Introdução}
+\par
+Conforme demandas do movimento Universidade Pública Grajaú, foi feito um pequeno estudo comparativo
+de todos os indicadores de acessibilidade em relação aos distritos da cidade de São Paulo, a intenção
+é estabelecer critérios comparativos entre os distritos de forma a entender quais tem acessos a determinados
+serviços e quais estão mais abandonados pelo serviço público.
+\par
+No total, os indicadores regionais foram cruzadas com as bordas distritais para tentarmos encontrar indicadores que
+mostrem a necessidade de uma instituição de ensino superior no Grajaú, eu tentei o máximo encontrar uma
+metodologia que viabilizasse essa classificação.
 \section{Os dados}
-\subsection{Distritos}
 \subsection{Dados de Acessibilidade}
+\par
+Os dados mais importante, os indicadores de acessibilidade,
+são computados e disponibilizados pelo Instituto de Pesquisa Econômica Aplicada (IPEA),
+que nos fornece um arquivo geográfico vetorial (.gpkg) com os dados da cidade, é um dataset
+de muito boa qualidade e bem informado, mas
+também bem difícil de navegar, em geral, ele divide a cidade em partições hexagonais de formato similar e não por distrito, além disso,
+uma determinada divisão pode ter mais de um hexágono, pois existem múltiplas modalidades de minuto e de transporte. Em geral, no
+arquivo vetorial existem 163482 `features', que são formas vetoriais, ou seja, hexágonos.
+\par
+Cada hexágono salva múltiplos tipos de dado, no total são cerca de 50 modalidades se eu não me
+engano, essas são explicadas no dicionário de variáveis\cite{dict} e na própria publicação do IPEA\cite{pub}.
+
+\subsection{Distritos}
 \subsection{Cidades de São Paulo}
 \section{Metodologia}
 \subsection{Código e Licença}
@@ -43,5 +65,11 @@
 \subsection{Mapas}
 \section{Conclusões}
 
+\begin{thebibliography}{9}
+\bibitem{dict}
+Dicionário de Variáveis (2025) \emph{IPEA} disponível em \url{https://ipea.github.io/aopdata/articles/data_dic_pt.html}.
+\bibitem{pub}
+Acessibilidade Urbana (2025) \emph{IPEA} disponível em \url{https://www.ipea.gov.br/acessooportunidades/}.
 
+\end{thebibliography}
 \end{document}
