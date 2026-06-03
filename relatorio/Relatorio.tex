@@ -14,12 +14,23 @@
 \usepackage{circuitikz}
 \usepackage{graphicx}
 \usepackage[portuguese]{babel}
+\usepackage{fancyhdr}
 
 \usepackage[T1]{fontenc}
 \usepackage[DefaultFeatures={Ligatures=Common}]{plex-otf} %
 % \renewcommand*\familydefault{\sfdefault} %% Only if the base font of the document is to be sans serif
 
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
+
 \begin{document}
+\pagestyle{fancy}
 
 \maketitle
 \pagebreak
@@ -27,6 +38,8 @@
 \listoffigures
 \listoftables
 \pagebreak
+
+\fancyfoot[LO]{PSolTEC}
 
 \section{Introdução}
 \par
@@ -53,12 +66,19 @@ Cada hexágono salva múltiplos tipos de dado, no total são cerca de 50 modalid
 engano, essas são explicadas no dicionário de variáveis\cite{dict} e na própria publicação do IPEA\cite{pub}.
 
 \subsection{Distritos}
+
+O shapefile contendo os distritos da cidade são essenciais para fazer esse cálculo, como base eu usei
+os próprios delimitadores disponibilizados pela prefeitura de São Paulo \cite{districts}.
+
 \subsection{Cidades de São Paulo}
 \section{Metodologia}
-\subsection{Código e Licença}
 \subsection{Computação dos dados distritais}
 \subsection{Normalização por População}
 \subsection{Normalização por Número de Capturas}
+\section{Repositório do Código}
+\subsection{Licença}
+\subsection{Dependências Externas e Setup}
+\subsection{Estrutura do Código}
 \section{Resultados}
 \subsection{Gráficos}
 \subsection{Tabelas}
@@ -70,6 +90,7 @@ engano, essas são explicadas no dicionário de variáveis\cite{dict} e na próp
 Dicionário de Variáveis (2025) \emph{IPEA} disponível em \url{https://ipea.github.io/aopdata/articles/data_dic_pt.html}.
 \bibitem{pub}
 Acessibilidade Urbana (2025) \emph{IPEA} disponível em \url{https://www.ipea.gov.br/acessooportunidades/}.
-
+\bibitem{districts}
+Distritos do Município de São Paulo (2015) \emph{Prefeitura de São Paulo} disponível em \url{https://dados.prefeitura.sp.gov.br/dataset/distritos}
 \end{thebibliography}
 \end{document}
