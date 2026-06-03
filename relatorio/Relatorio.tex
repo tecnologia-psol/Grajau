@@ -160,7 +160,7 @@ pelos distritos em volta.
 \section{Repositório do Código}
 \par
 Todo o código fonte do projeto, as classes geradoras de dados e o arquivo LaTeX desse
-documento são software livre, estão disponíveis em \url{github.com/tecnologia-psol/Grajau},
+documento são software livre, estão disponíveis em \url{https://github.com/tecnologia-psol/Grajau},
 pelo próprio perfil da Setorial.
 \subsection{Licença}
 \par
@@ -253,8 +253,8 @@ O repositório de dados é organizado da seguinte forma:
 \par
 Cada modalidade computada tem dois gráficos principais, o normalizado por capturas e
 o normalizado por população, posfixados por \verb|avg| e \verb|pop| respectivamente, por
-exemplo, para a modalidade \verb|CMATA15_2017_walk|, existem os gráficos
-\verb|CMATA15_2017_walk_avg.png| e os gráficos \verb|CMATA15_2017_walk_pop.png|.
+exemplo, para a modalidade \verb|CMATA15_2017_walk|, tem o gráfico normalizado por capturas
+(\ref{fig:CMATANormsAvg}) e o gráfico normalizado por população (\ref{fig:CMATANormsPop}).
 
 \pagebreak
 \begin{figure}
@@ -264,14 +264,16 @@ exemplo, para a modalidade \verb|CMATA15_2017_walk|, existem os gráficos
 \centering
 \includegraphics[width=.4\linewidth]{CMATA15_2017_walk_avg.png}
 \caption{CMATA15\_2017\_walk.png}
+\label{fig:CMATANormsAvg}
 \end{subfigure}%
 \begin{subfigure}{.5\textwidth}
 \centering
 \includegraphics[width=.4\linewidth]{CMATA15_2017_walk_pop.png}
 \caption{CMATA15\_2017\_walk.png}
+\label{fig:CMATANormsPop}
 \end{subfigure}
-
 \caption{CMATA15\_2017\_walk}
+\label{fig:CMATANorms}
 \end{figure}
 \pagebreak
 
@@ -287,7 +289,7 @@ distritos que aparecem no most e no least.
 \subsection{Mapas}
 
 \pagebreak
-\section{Conclusões}
+\section{Conclusões e Encaminhamentos}
 
 \begin{thebibliography}{9}
 \bibitem{dict}
