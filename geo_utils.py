@@ -189,7 +189,8 @@ def compile_category(hexes: ogr.Layer, districts: ogr.Layer, category_name: stri
 
 	dataset.Close()
 
-	data_vis.make_map(category_name,category_name,shapefile_loc,data_table,DATA_BY_POPULATION_LABEL,data_vis.get_color_for_population)
+	data_vis.make_map(f'{category_name}_pop',category_name,shapefile_loc,data_table,DATA_BY_POPULATION_LABEL,data_vis.get_color_for_population)
+	data_vis.make_map(f'{category_name}_avg',category_name,shapefile_loc,data_table,DATA_AVG_LABEL,data_vis.get_color_for_average)
 
 	return shapefile_loc
 

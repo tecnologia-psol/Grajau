@@ -59,7 +59,8 @@ def get_color_for_population(val):
 		(  2,(1,.5,0)),
 		(  5,(1,1 ,0)),
 		( 10,(0,1 ,0)),
-		(100,(0,.2,0))
+		(100,(0,.2,0)),
+		(10000,(.5,0,.5))
 	]
 	for i in range(1, len(keyframes)):
 		if keyframes[i-1][0] <= val and val <= keyframes[i][0]:
@@ -67,7 +68,18 @@ def get_color_for_population(val):
 	return (0,0,1)
 
 def get_color_for_average(val):
-	return(0,0,1)
+	keyframes = [
+		(     0,(1 , 0 , 0)),
+		(   250,(1 ,.5, 0)),
+		(   500,(1 ,1 , 0)),
+		(  2500,(0 ,1 , 0)),
+		( 10000,(0 ,.2, 0)),
+		(100000,(.5,0 ,.5))
+	]
+	for i in range(1, len(keyframes)):
+		if keyframes[i-1][0] <= val and val <= keyframes[i][0]:
+			return tuple_interpolate(keyframes[i-1][1],keyframes[i][1],val/keyframes[len(keyframes)-1][0])
+	return (0,0,1)
 
 def make_map(filename, title, vector_loc, data, info_col_name, color_function):
 	global cidades_loc
