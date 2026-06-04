@@ -41,7 +41,7 @@
     citecolor=black,
     filecolor=black,
     linkcolor=black,
-    urlcolor=black
+    urlcolor=gray
 }
 
 \begin{document}
@@ -152,11 +152,12 @@ população se dá por
 essa média tende a ser um pouco melhor para os indicadores CMA, mas ainda sim não é perfeita.
 \subsection{Limitações}
 \par 
-Importante notar que nenhuma das normalizações são 100% corretas, mas somente aproximações dos 
+Importante notar que nenhuma das normalizações é 100\% correta, são somente aproximações dos 
 valores de acessibilidade dos distritos que podem ser usada de forma comparativa, mas que, ao meu
 ver, não representam nenhum indicador tangível, para indicadores de tipo CMA, embora a normalização
 por população seja boa para este propósito, a acessibilidade de em um distrito também é afetada
-pelos distritos em volta.
+pelos distritos em volta, por exemplo. Distritos com alta atividade comercial podem uma acessibilidade
+por número de habitantes muito alta, pois esses serviços não são destinados somente aos moradores.
 \pagebreak
 \section{Repositório do Código}
 \par
@@ -245,7 +246,7 @@ O repositório de dados é organizado da seguinte forma:
 .3 modalidades\DTcomment{Arquivos geográficos dividindo hexágonos de cada modalidade.}.
 .3 modalidades\_distritos\DTcomment{Modalidades divididas em distritos.}.
 .2 to\DTcomment{Arquivos processados (imagens e tabelas)}.
-.2 modalidades\_graficos\DTcomment{Graficos com todos os distritos}.
+.3 modalidades\_graficos\DTcomment{Graficos com todos os distritos}.
 .3 modalidades\_graficos\_redux\DTcomment{Gráficos distritos nos extremos}.
 .3 modalidades\_graficos\_tabelas\DTcomment{Tabelas de dados}.
 .3 modalidades\_graficos\_mapas\DTcomment{Mapas com estatísticas}.
@@ -263,15 +264,15 @@ exemplo, para a modalidade \verb|CMATA15_2017_walk|, tem o gráfico normalizado 
 \begin{figure}
 \centering
 
-\begin{subfigure}{.5\textwidth}
+\begin{subfigure}{.4\textwidth}
 \centering
-\includegraphics[width=.4\linewidth]{CMATA15_2017_walk_avg.png}
+\includegraphics[width=.3\linewidth]{CMATA15_2017_walk_avg.png}
 \caption{CMATA15\_2017\_walk.png}
 \label{fig:CMATANormsAvg}
 \end{subfigure}%
-\begin{subfigure}{.5\textwidth}
+\begin{subfigure}{.4\textwidth}
 \centering
-\includegraphics[width=.4\linewidth]{CMATA15_2017_walk_pop.png}
+\includegraphics[width=.3\linewidth]{CMATA15_2017_walk_pop.png}
 \caption{CMATA15\_2017\_walk.png}
 \label{fig:CMATANormsPop}
 \end{subfigure}
@@ -372,23 +373,67 @@ SAPOPEMBA & 27961 & 278960 & 130 & 215.08 & 0.10 & SAPOPEMBA & SAP \\
 \caption{Tabela simplificada{\protect\footnotemark} para a modalidade CMATA15\_2017\_walk}
 \end{table}
 
+\par A maioria dos valores é bem simples de entender, os importantes aqui são \verb|population|, 
+que representa a população total do distrito, \verb|hits|, que representa quantos hexágonos possuem
+seu centróide no distrito, \verb|data\_sum|, que representa a somatória de todos os
+dados da modalidade para esse distrito (nesse caso, o dado que estamos analisando é o número de instituições
+de ensino superior acessíveis a pé em 15 minutos no ano de 2017), o \verb|data\_avg|, que é a média normalizada
+número de hexágonos e o \verb|data_popul|, que é a média normalizada por número de pessoas.
+
 \footnotetext{
     Removi a maioria dos distritos e arredondei os valores para duas casas decimais, a tabela original tinha 97 linhas.
 }
 \subsection{Mapas}
+\par
+Os mapas ainda não estão completamente refinados, mas em geral eles representam de forma visual os
+dados já mencionados, para cada modalidade vão existir sempre dois mapas, um normalizado por população
+e outro normalizado por pontos de referência (WIP).
+
+\begin{figure}[H]
+\begin{subfigure}{.5\textwidth}
+\centering
+\includegraphics[width=.75\linewidth]{CMATA15_2017_walk.png}
+\caption{CMATA15\_2017\_walk\_pop.png}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+\centering
+\includegraphics[width=.75\linewidth]{CMATA15_2017_bicycle.png}
+\caption{CMATA15\_2017\_bicycle\_pop.png}
+\end{subfigure}
+
+\vskip\baselineskip
+
+\begin{subfigure}{.5\textwidth}
+\centering
+\includegraphics[width=.75\linewidth]{CMATA15_2017_car.png}
+\caption{CMATA15\_2017\_car\_pop.png}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+\centering
+\includegraphics[width=.75\linewidth]{CMATA15_2017_public_transport.png}
+\caption{CMATA15\_2017\_public\_transport\_pop.png}
+\end{subfigure}%
+
+\caption{Comparação entre diferentes meios de transporte para o índice CMATA15.}
+\end{figure}
 
 \pagebreak
 \section{Conclusões e Encaminhamentos}
+\par
+Como eu ainda estou trabalhando na compilação desses dados, eu acabei por não analisar muito
+precisamente os dados, este relatório aqui também não está em sua versão final, dito isso,
+pra mim, as estatísticas em que o abandono do Grajaú é mais visível são aquelas de serviços de 
+alta qualificação, como por exemplo instituições de ensino superior.
 
 \begin{thebibliography}{9}
 \bibitem{dict}
-Dicionário de Variáveis (2025) \emph{IPEA} disponível em \url{https://ipea.github.io/aopdata/articles/data_dic_pt.html}.
+Dicionário de Variáveis (2025), \emph{IPEA}, disponível em \url{https://ipea.github.io/aopdata/articles/data_dic_pt.html}.
 \bibitem{pub}
-Acessibilidade Urbana (2025) \emph{IPEA} disponível em \url{https://www.ipea.gov.br/acessooportunidades/}.
+Acessibilidade Urbana (2025), \emph{IPEA}, disponível em \url{https://www.ipea.gov.br/acessooportunidades/}.
 \bibitem{districts}
-Distritos do Município de São Paulo (2015) \emph{Prefeitura de São Paulo} disponível em \url{https://dados.prefeitura.sp.gov.br/dataset/distritos}
+Distritos do Município de São Paulo (2015), \emph{Prefeitura de São Paulo}, disponível em \url{https://dados.prefeitura.sp.gov.br/dataset/distritos}
 \bibitem{cities}
-Malha Municipal (2025) \emph{IBGE} disponível em \url{https://www.ibge.gov.br/geociencias/organizacao-do-territorio/malhas-territoriais/15774-malhas.html}
+Malha Municipal (2025), \emph{IBGE}, disponível em \url{https://www.ibge.gov.br/geociencias/organizacao-do-territorio/malhas-territoriais/15774-malhas.html}
 \end{thebibliography}
 
 \end{document}
