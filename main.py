@@ -18,10 +18,11 @@ os.mkdir("./tmp/modalidades_distritos")
 os.mkdir("./tmp/modalidades_rasters")
 os.mkdir("./to/modalidades_mapas")
 os.mkdir("./to/modalidades_tabelas")
+os.mkdir("./to/modalidades_tabelas_csv")
 os.mkdir("./to/modalidades_graficos")
 os.mkdir("./to/modalidades_graficos_redux")
 
-print(from_d, '->', to_d)
+print(from_d, '->', temp_d, '->', to_d)
 
 distritos_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/DISTRITOS_SIRGAS2000.shp")
 acesso_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/acess_spo.gpkg")

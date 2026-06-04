@@ -2,8 +2,7 @@
 
 \title{Indíces de acessibilidade entre distritos do município de São Paulo.}
 \author{
-	Setorial de Tecnologia e Soberania Digital do PSOL \and
-	Júlio César Borges de Oliveira Sampaio
+	Setorial de Tecnologia e Soberania Digital do PSOL
 }
 
 % \date{Junho de 2026}
@@ -16,6 +15,7 @@
 \usepackage{graphicx}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage[a4paper, total={6in, 8in}]{geometry}
 
 \graphicspath{ {~/EDPET/Grajau/relatorio/assets/} }
 \usepackage[outercaption]{sidecap}
@@ -27,6 +27,7 @@
 \usepackage{relsize}
 \usepackage{listings}
 \usepackage{dirtree}
+\usepackage{float}
 
 \usepackage[T1]{fontenc}
 \usepackage[DefaultFeatures={Ligatures=Common}]{plex-otf}
@@ -216,6 +217,7 @@ as bibliotecas:
 \item hyperref
 \item circuitikz
 \item graphicx
+\item geometry
 \item caption
 \item subcaption
 \item babel (portuguese)
@@ -224,6 +226,7 @@ as bibliotecas:
 \item relsize
 \item listings
 \item dirtree
+\item float
 \item fontenc
 \item hyperref
 \item sidecap
@@ -282,10 +285,96 @@ exemplo, para a modalidade \verb|CMATA15_2017_walk|, tem o gráfico normalizado 
 Os gráficos redux são similares aos anteriores, mas filtrados, para cada gráfico normal vão existir
 3 gráficos redux, um \verb|least| que tem somente os 15 distritos com os menores indicadores,
 \verb|most| que tem os 15 distritos com os maiores indicadores, e o \verb|both| que tem os
-distritos que aparecem no most e no least.
+distritos que aparecem no most e no least. 
+\begin{figure}[H]
+\centering
+
+\begin{subfigure}{.5\textwidth}
+\centering
+\includegraphics[width=.4\linewidth]{CMATA15_2017_walk_avg_least.png}
+\caption{CMATA15\_2017\_walk\_avg\_least.png}
+\label{fig:CMATANormsRedux1}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+\centering
+\includegraphics[width=.4\linewidth]{CMATA15_2017_walk_avg_most.png}
+\caption{CMATA15\_2017\_walk\_avg\_most.png}
+\label{fig:CMATANormsRedux2}
+\end{subfigure}
+\vskip\baselineskip
+\begin{subfigure}{.5\textwidth}
+\centering
+\includegraphics[width=.4\linewidth]{CMATA15_2017_walk_pop_least.png}
+\caption{CMATA15\_2017\_walk\_pop\_least.png}
+\label{fig:CMATANormsRedux3}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+\centering
+\includegraphics[width=.4\linewidth]{CMATA15_2017_walk_pop_most.png}
+\caption{CMATA15\_2017\_walk\_pop\_most.png}
+\label{fig:CMATANormsRedux4}
+\end{subfigure}
+\vskip\baselineskip
+\begin{subfigure}{.5\textwidth}
+\centering
+\includegraphics[width=.4\linewidth]{CMATA15_2017_walk_avg_both.png}
+\caption{CMATA15\_2017\_walk\_avg\_both.png}
+\label{fig:CMATANormsRedux5}
+\end{subfigure}%\
+\begin{subfigure}{.5\textwidth}
+\centering
+\includegraphics[width=.4\linewidth]{CMATA15_2017_walk_pop_both.png}
+\caption{CMATA15\_2017\_walk\_pop\_both.png}
+\label{fig:CMATANormsRedux6}
+\end{subfigure}
+
+\caption{Todos os gráficos redux da modalidade CMATA15\_2017\_walk}
+\end{figure}
+\par
+De forma geral, para cada modalidade, vão ter 2 gráficos, para
+cada gráfico completo vão ter 3 gráficos redux.
 
 \subsection{Tabelas}
+\par
+Na pasta de tabelas, são disponibilizadas tabelas no formado xlsl, que é o formato do Excel,
+também estou cogitando disponibilizar tabelas no formato csv. De forma geral, para cada feature
+há uma única tabela, contendo tanto as normalizações por captura quanto as por população.
 
+\begin{table}[H]
+\small
+\begin{tabular}{ c|c c c c c c c }
+ & data\_sum & population & hits & data\_avg & data\_popul & nome\_dist & sigla\_dist \\
+\hline
+JOSE BONIFACIO & 23887 & 122979 & 139 & 171.84 & 0.19 & JOSE BONIFACIO & JBO \\
+VILA PRUDENTE & 43489 & 102517 & 92 & 472.70 & 0.42 & VILA PRUDENTE & VPR \\
+JD PAULISTA & 392291 & 91747 & 61 & 6431 & 4.27 & JD PAULISTA & JDP \\
+LAJEADO & 19129 & 155571 & 83 & 230.46 & 0.12 & LAJEADO & LAJ \\
+LAPA & 171653 & 67296 & 99 & 1733.86 & 2.55 & LAPA & LAP \\
+LIBERDADE & 107046 & 69074 & 33 & 3243.81 & 1.54 & LIBERDADE & LIB \\
+ANHANGUERA & 6850 & 64982 & 277 & 24.72 & 0.10 & ANHANGUERA & ANH \\
+ARICANDUVA & 19615 & 91248 & 65 & 301.76 & 0.21 & ARICANDUVA & ARI \\
+BARRA FUNDA & 154497 & 17604 & 57 & 2710.47 & 8.77 & BARRA FUNDA & BFU \\
+CANGAIBA & 16682 & 140438 & 147 & 113.48 & 0.11 & CANGAIBA & CNG \\
+CAPAO REDONDO & 30272 & 265653 & 129 & 234.66 & 0.11 & CAPAO REDONDO & CRE \\
+GRAJAU & 27912 & 353435 & 770 & 36.24 & 0.07 & GRAJAU & GRA \\
+GUAIANASES & 15565 & 105075 & 84 & 185.29 & 0.14 & GUAIANASES & GUA \\
+IPIRANGA & 92351 & 108121 & 102 & 905.40 & 0.85 & IPIRANGA & IPI \\
+ITAIM BIBI & 1179161 & 96897 & 95 & 12412.22 & 12.16 & ITAIM BIBI & IBI \\
+ITAQUERA & 43335 & 203034 & 138 & 314.02 & 0.21 & ITAQUERA & ITQ \\
+MANDAQUI & 18302 & 102460 & 110 & 166.38 & 0.17 & MANDAQUI & MAN \\
+MARSILAC & 318 & 8069 & 1188 & 0.26 & 0.03 & MARSILAC & MAR \\
+PINHEIROS & 500090 & 64840 & 79 & 6330.25 & 7.71 & PINHEIROS & PIN \\
+SAO MATEUS & 34487 & 156896 & 123 & 280.38 & 0.21 & SAO MATEUS & SMT \\
+SAO MIGUEL & 28413 & 88434 & 81 & 350.77 & 0.32 & SAO MIGUEL & SMI \\
+SAO RAFAEL & 13184 & 142543 & 121 & 108.95 & 0.09 & SAO RAFAEL & SRA \\
+SAPOPEMBA & 27961 & 278960 & 130 & 215.08 & 0.10 & SAPOPEMBA & SAP \\
+\end{tabular}
+\caption{Tabela simplificada{\protect\footnotemark} para a modalidade CMATA15\_2017\_walk}
+\end{table}
+
+\footnotetext{
+    Removi a maioria dos distritos e arredondei os valores para duas casas decimais, a tabela original tinha 97 linhas.
+}
 \subsection{Mapas}
 
 \pagebreak
@@ -301,4 +390,5 @@ Distritos do Município de São Paulo (2015) \emph{Prefeitura de São Paulo} dis
 \bibitem{cities}
 Malha Municipal (2025) \emph{IBGE} disponível em \url{https://www.ibge.gov.br/geociencias/organizacao-do-territorio/malhas-territoriais/15774-malhas.html}
 \end{thebibliography}
+
 \end{document}
