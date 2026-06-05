@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import textwrap
 import cartopy.crs as ccrs
 import cartopy.io.shapereader as shpreader
@@ -43,16 +44,18 @@ def make_bar(title,x_axis,y_axis,filename):
 
 
 def linear_interpolate(min_,max_,value):
-	return float((max_-min_) * value + min_)
+	return float((max_-min_) * min(value, 1) + min_)
 
 def tuple_interpolate(min_, max_, value):
+	if value > 1:
+		print(f'ERRO: Valor de interpolação inválido: {value}')
 	return (
 		linear_interpolate(min_[0],max_[0],value),
 		linear_interpolate(min_[1],max_[1],value),
 		linear_interpolate(min_[2],max_[2],value)
 	)
 
-def get_color_for_population(val):
+def get_color_for_population_abs(val):
 	# 0-100
 	keyframes = [
 		(  0,(1,0 ,0)),
@@ -67,7 +70,7 @@ def get_color_for_population(val):
 			return tuple_interpolate(keyframes[i-1][1],keyframes[i][1],val/keyframes[len(keyframes)-1][0])
 	return (0,0,1)
 
-def get_color_for_average(val):
+def get_color_for_average_abs(val):
 	keyframes = [
 		(     0,(1 , 0 , 0)),
 		(   250,(1 ,.5, 0)),
@@ -81,9 +84,40 @@ def get_color_for_average(val):
 			return tuple_interpolate(keyframes[i-1][1],keyframes[i][1],val/keyframes[len(keyframes)-1][0])
 	return (0,0,1)
 
-def make_map(filename, title, vector_loc, data, info_col_name, color_function):
+DATA_MIN = 0
+DATA_MAX = 1
+
+def set_limits(data_min, data_max):
+	global DATA_MIN, DATA_MAX
+	DATA_MIN = data_min
+	DATA_MAX = data_max
+
+
+def get_color_rel(val):
+	global DATA_MIN, DATA_MAX
+	keyframes = [
+		(    0,(1, 0 ,0)),
+		(    2,(1,.5,0 )),
+		(    5,(1,1 ,0 )),
+		(   10,(0,1 ,0 )),
+		(100.1,(0,.2,0 ))
+	]
+	k_len = len(keyframes)
+	max_key = 100
+	n_val = max_key * (val-DATA_MIN) / (DATA_MAX - DATA_MIN)
+
+	for i in range(1, len(keyframes)):
+		# print(f'comparando {n_val} <= {keyframes[i][0]}')
+		if n_val <= keyframes[i][0]:
+			return tuple_interpolate(keyframes[i-1][1],keyframes[i][1],n_val / max_key)
+	raise Exception(f'ERRO: ERRO DE INTERPOLAÇÃO, valor ({val}->{n_val}) é maior que {max_key}')
+	return (0,0,1) # Teoricamente impossível
+
+def make_map(filename, title, vector_loc, data, info_col_name, color_function, dir = './to/modalidades_mapas/'):
 	global cidades_loc
-	plt.figure(dpi=200)
+	fig = plt.figure(dpi=200)
+
+	# plt.subplot(1, 2, 1)
 	ax: plt.Axes = plt.axes(projection=ccrs.PlateCarree())
 	ax.set_extent([-46.95, -46.25, -23.35, -24.05], crs=ccrs.PlateCarree())
 	plt.title("\n".join(textwrap.wrap(title,70)),loc='center',size=12)
@@ -102,13 +136,23 @@ def make_map(filename, title, vector_loc, data, info_col_name, color_function):
 	for record in read.records():
 		geometry = record.geometry
 		distrito_data = data[data[geo_utils.DISTRICT_NAME_LABEL] == record.attributes[geo_utils.DISTRICT_NAME_LABEL]]
-		color = get_color_for_population(distrito_data.iloc[0][info_col_name])
+		color = color_function(distrito_data.iloc[0][info_col_name])
 		shape_feature = ShapelyFeature(geometry,ccrs.PlateCarree(),
 			facecolor=color or (0,0,1),
 			edgecolor=(.05,.05,.05)
 		)
 		ax.add_feature(shape_feature)
+	
+	cmap = mpl.cm.cool
+	norm = mpl.colors.Normalize(vmin=5, vmax=10)
 
+	# print(f'fig = {fig}')
+
+	fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap),
+				ax=ax, orientation='vertical', label='Unidade')
+	
 	plt.tight_layout()
-	plt.savefig('./to/modalidades_mapas/' + filename + '.png')
+	plt.savefig(dir + filename + '.png')
 	plt.close()
+
+	exit(0)

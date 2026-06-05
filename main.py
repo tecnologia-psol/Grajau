@@ -7,16 +7,26 @@ import data_vis, geo_utils, data_man
 
 ogr.UseExceptions()
 
+# TODO pós-processamento
+
 from_d = './from'
 to_d = './to'
 temp_d = './tmp'
+
+PROPERTIES = {
+	"compile_centroids": False
+}
+
+for arg in sys.argv:
+	if arg == '--compile-centroids':
+		PROPERTIES["compile_centroids"] = True
 
 # TODO peloamor use constantes
 os.mkdir("./tmp")
 os.mkdir("./tmp/modalidades")
 os.mkdir("./tmp/modalidades_distritos")
-os.mkdir("./tmp/modalidades_rasters")
 os.mkdir("./to/modalidades_mapas")
+os.mkdir("./to/modalidades_mapas_normalizados")
 os.mkdir("./to/modalidades_tabelas")
 os.mkdir("./to/modalidades_tabelas_csv")
 os.mkdir("./to/modalidades_graficos")

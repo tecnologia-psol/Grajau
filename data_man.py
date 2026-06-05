@@ -1,6 +1,6 @@
 import pandas as pd
 
-def gen_table(data, category):
+def gen_table(data, category) -> pd.DataFrame:
 	cols = []
 	for index in data:
 		for label in data[index]:
@@ -11,4 +11,5 @@ def gen_table(data, category):
 		dataframe.loc[index] = data[index]
 
 	dataframe.to_excel('./to/modalidades_tabelas/' + category +'.xlsx')
+	dataframe.to_csv('./to/modalidades_tabelas_csv/' + category + '.csv')
 	return dataframe

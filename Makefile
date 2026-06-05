@@ -17,3 +17,7 @@ clear:
 
 time:
 	{ time make run > time.log ; } 2> time.log
+
+centroids:
+	make clear
+	python main.py --compile-centroids

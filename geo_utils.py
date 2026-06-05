@@ -189,10 +189,37 @@ def compile_category(hexes: ogr.Layer, districts: ogr.Layer, category_name: stri
 
 	dataset.Close()
 
-	data_vis.make_map(f'{category_name}_pop',category_name,shapefile_loc,data_table,DATA_BY_POPULATION_LABEL,data_vis.get_color_for_population)
-	data_vis.make_map(f'{category_name}_avg',category_name,shapefile_loc,data_table,DATA_AVG_LABEL,data_vis.get_color_for_average)
+	# Mapas absolutos
+	data_vis.make_map(f'{category_name}_pop',category_name,shapefile_loc,data_table,DATA_BY_POPULATION_LABEL,data_vis.get_color_for_population_abs)
+	data_vis.make_map(f'{category_name}_avg',category_name,shapefile_loc,data_table,DATA_AVG_LABEL,data_vis.get_color_for_average_abs)
+
+	# Mapas normalizados
+	data_min = data_table.sort_values(DATA_BY_POPULATION_LABEL,ascending=True).iloc[0][DATA_BY_POPULATION_LABEL]
+	data_max = data_table.sort_values(DATA_BY_POPULATION_LABEL,ascending=False).iloc[0][DATA_BY_POPULATION_LABEL]
+	data_vis.set_limits(data_min,data_max)
+	# print(f'{data_min},{data_max} p',data_vis.DATA_MIN,data_vis.DATA_MAX)
+	data_vis.make_map(f'{category_name}_pop_norm',category_name,shapefile_loc,data_table,DATA_BY_POPULATION_LABEL,data_vis.get_color_rel,dir='./to/modalidades_mapas_normalizados/')
+	
+	data_min = data_table.sort_values(DATA_AVG_LABEL,ascending=True).iloc[0][DATA_AVG_LABEL]
+	data_max = data_table.sort_values(DATA_AVG_LABEL,ascending=False).iloc[0][DATA_AVG_LABEL]
+	data_vis.set_limits(data_min,data_max)
+	# print(f'{data_min},{data_max} a',data_vis.DATA_MIN,data_vis.DATA_MAX)
+	data_vis.make_map(f'{category_name}_avg_norm',category_name,shapefile_loc,data_table,DATA_AVG_LABEL,data_vis.get_color_rel,dir='./to/modalidades_mapas_normalizados/')
 
 	return shapefile_loc
+
+def compile_centroids(hexes: ogr.Layer):
+	loc = 'tmp/centroids.shp'
+	dataset: gdal.Dataset = gdal.GetDriverByName("ESRI Shapefile")
+	layer: ogr.Layer = datasets[f_name].CreateLayer('l1')
+	for hexg in hexes:
+		hexg: ogr.Feature
+		centroid: ogr.Geometry = hexg.geometry().Centroid()
+		defn = ogr.FeatureDefn()
+		n_feature = ogr.Feature(defn)
+		n_feature.SetGeometry(centroid)
+		layer.CreateFeature(n_feature)
+	dataset.Close()
 
 def separate_categories(hexes: ogr.Layer, districts: ogr.Layer):
 	print("Separando categorias")
@@ -208,6 +235,7 @@ def separate_categories(hexes: ogr.Layer, districts: ogr.Layer):
 				district_name = district['NOME_DIST']
 				break
 		c+=1
+		if c > 100: break
 		print(f'Processando feature {c}/{count} ({(100*c/count):.2f}%) ({len(datasets)} datasets)')
 		feature: ogr.Feature
 		fields = gen_hex_fields()
@@ -240,4 +268,3 @@ def separate_categories(hexes: ogr.Layer, districts: ogr.Layer):
 		ret[key] = ogr.Open(file_locations[key])
 	
 	return ret
-
