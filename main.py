@@ -6,6 +6,7 @@ import matplotlib
 import data_vis, geo_utils, data_man
 
 ogr.UseExceptions()
+gdal.SetCacheMax(4000000000)
 
 # TODO pós-processamento
 

@@ -171,5 +171,3 @@ def make_map(filename, title, vector_loc, data, info_col_name, color_function, d
 	plt.tight_layout()
 	plt.savefig(dir + filename + '.png')
 	plt.close()
-
-	exit(0)
