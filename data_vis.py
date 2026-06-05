@@ -5,6 +5,7 @@ import cartopy.crs as ccrs
 import cartopy.io.shapereader as shpreader
 from cartopy.feature import ShapelyFeature
 import geo_utils
+import numpy as np
 
 cidades_loc = "from/Acesso GIS/SP_Municipios_2024.shp"
 
@@ -92,7 +93,6 @@ def set_limits(data_min, data_max):
 	DATA_MIN = data_min
 	DATA_MAX = data_max
 
-
 def get_color_rel(val):
 	global DATA_MIN, DATA_MAX
 	keyframes = [
@@ -100,7 +100,7 @@ def get_color_rel(val):
 		(    2,(1,.5,0 )),
 		(    5,(1,1 ,0 )),
 		(   10,(0,1 ,0 )),
-		(100.1,(0,.2,0 ))
+		(100.1,(0,.4,0 ))
 	]
 	k_len = len(keyframes)
 	max_key = 100
@@ -109,13 +109,31 @@ def get_color_rel(val):
 	for i in range(1, len(keyframes)):
 		# print(f'comparando {n_val} <= {keyframes[i][0]}')
 		if n_val <= keyframes[i][0]:
-			return tuple_interpolate(keyframes[i-1][1],keyframes[i][1],n_val / max_key)
-	raise Exception(f'ERRO: ERRO DE INTERPOLAÇÃO, valor ({val}->{n_val}) é maior que {max_key}')
-	return (0,0,1) # Teoricamente impossível
+			normal_for_subinterval = (n_val - keyframes[i-1][0])/(keyframes[i][0]-keyframes[i-1][0])
+			return tuple_interpolate(keyframes[i-1][1],keyframes[i][1],normal_for_subinterval)
+	# raise Exception(f'ERRO: ERRO DE INTERPOLAÇÃO, valor ({val}->{n_val}) é maior que {max_key}')
+	print(f'ERRO: ERRO DE INTERPOLAÇÃO, valor ({val}->{n_val}) é maior que {max_key}')
+	# return (0,0,1) # Teoricamente impossível
+	return keyframes[k_len - 1]
 
-def make_map(filename, title, vector_loc, data, info_col_name, color_function, dir = './to/modalidades_mapas/'):
-	global cidades_loc
+def make_colormap(color_function,min,max,step):
+	arr = []
+	i = min
+	while i < max:
+		v = np.asarray(color_function(i))
+		arr.append(v)
+		# print(f'{i} -> ({v[0]:.2f} {v[1]:.2f} {v[2]:.2f})')
+		i += step
+
+	map = mpl.colors.ListedColormap(np.array(arr))
+	return map
+
+def make_map(filename, title, vector_loc, data, info_col_name, color_function, dir = './to/modalidades_mapas/', **kwargs):
+	global cidades_loc, DATA_MIN, DATA_MAX
 	fig = plt.figure(dpi=200)
+
+	rmin = kwargs.get('rmin',DATA_MIN)
+	rmax = kwargs.get('rmax',DATA_MAX)
 
 	# plt.subplot(1, 2, 1)
 	ax: plt.Axes = plt.axes(projection=ccrs.PlateCarree())
@@ -143,13 +161,12 @@ def make_map(filename, title, vector_loc, data, info_col_name, color_function, d
 		)
 		ax.add_feature(shape_feature)
 	
-	cmap = mpl.cm.cool
-	norm = mpl.colors.Normalize(vmin=5, vmax=10)
-
-	# print(f'fig = {fig}')
-
+	# cmap = mpl.cm.cool
+	cmap = make_colormap(color_function,rmin,rmax,(rmax-rmin)/ 100.0)
+	# print(f"{cmap}, {cmap.colors}")
+	norm = mpl.colors.Normalize(vmin=rmin, vmax=rmax)
 	fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap),
-				ax=ax, orientation='vertical', label='Unidade')
+				ax=ax, orientation='vertical', label=f'{info_col_name}')
 	
 	plt.tight_layout()
 	plt.savefig(dir + filename + '.png')

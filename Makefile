@@ -16,7 +16,11 @@ clear:
 	yes | rm -R ./to/* || true
 
 time:
-	{ time make run > time.log ; } 2> time.log
+	echo "Começando em" > time.log
+	date >> time.log 
+	time make run >> time.log ;
+	echo "Finalizado em" >> time.log 
+	date >> time.log 
 
 centroids:
 	make clear

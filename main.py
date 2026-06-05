@@ -14,12 +14,30 @@ to_d = './to'
 temp_d = './tmp'
 
 PROPERTIES = {
-	"compile_centroids": False
+	"compile_centroids": False,
+	"test_scale": False
 }
 
 for arg in sys.argv:
 	if arg == '--compile-centroids':
 		PROPERTIES["compile_centroids"] = True
+	if arg == '--scale-test':
+		PROPERTIES["test_scale"] = True
+
+if PROPERTIES["test_scale"]:
+	data_vis.set_limits(0,1000)
+	x,r,g,b = [], [], [], []
+	for i in range(0,1000):
+		col = data_vis.get_color_rel(i)
+		x.append(i)
+		r.append(col[0])
+		g.append(col[1])
+		b.append(col[2])
+	plt.plot(x,r,color='red')
+	plt.plot(x,g,color='green')
+	plt.plot(x,b,color='blue')
+	plt.show()
+	exit(0)
 
 # TODO peloamor use constantes
 os.mkdir("./tmp")
