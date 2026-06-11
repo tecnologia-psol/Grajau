@@ -89,6 +89,12 @@ arquivo vetorial existem 163482 `features', que são formas vetoriais, ou seja, 
 Cada hexágono salva múltiplos tipos de dado, no total são cerca de 50 modalidades se eu não me
 engano, essas são explicadas no dicionário de variáveis\cite{dict} e na própria publicação do IPEA\cite{pub}.
 
+\par
+De forma geral, os indicadores impementados são os de tipo CMA e CMP (os de TMI são mais difíceis de computar),
+os de CMA representam o número de estabelecimentos acessíveis para um indivíduo na região, enquanto os de tipo 
+CMP representa a quantidade de indivíduos que pode acessar um determinado serviço. Os indicadores TMI
+representam o tempo de viagem médio até um determinado estabelecimento.
+
 \subsection{Distritos}
 
 O shapefile contendo os distritos da cidade são essenciais para fazer esse cálculo, como base eu usei
@@ -158,14 +164,23 @@ população se dá por
 {\Bigg(\sum_{\text{c}(h) \in D} \text p(h)\Bigg)}^{-1} \sum_{\text{c}(h) \in D} \text{M}(h)
 \]
 essa média tende a ser um pouco melhor para os indicadores CMA, mas ainda sim não é perfeita.
+\subsection{Overview}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{GRAJAU}
+\caption{Comparação entre a metodologia de normalização por pontos de referência e por população.}
+\end{figure}
+
 \subsection{Limitações}
 \par 
-Importante notar que nenhuma das normalizações é 100\% correta, são somente aproximações dos 
-valores de acessibilidade dos distritos que podem ser usada de forma comparativa, mas que, ao meu
-ver, não representam nenhum indicador tangível, para indicadores de tipo CMA, embora a normalização
+Importante notar que nenhuma das normalizações é 100\% correta, as normalizações são somente
+aproximações dos  valores de acessibilidade dos distritos, podem ser usadas de forma comparativa,
+ para indicadores de tipo CMA, embora a normalização
 por população seja boa para este propósito, a acessibilidade de em um distrito também é afetada
-pelos distritos em volta, por exemplo. Distritos com alta atividade comercial podem uma acessibilidade
-por número de habitantes muito alta, pois esses serviços não são destinados somente aos moradores.
+pelos distritos em volta. Além disso, distritos com alta atividade comercial ou circulação de pessoas podem ter uma acessibilidade
+por número de habitantes muito alta, pois os serviços nesse distrito não são mantidos somente
+para os residentes.
 \pagebreak
 \section{Repositório do Código}
 \par
@@ -258,6 +273,7 @@ O repositório de dados é organizado da seguinte forma:
 .3 modalidades\_graficos\_redux\DTcomment{Gráficos distritos nos extremos}.
 .3 modalidades\_graficos\_tabelas\DTcomment{Tabelas de dados}.
 .3 modalidades\_graficos\_mapas\DTcomment{Mapas com estatísticas}.
+.3 modalidades\_graficos\_mapas\_normalizados\DTcomment{Mapas com escala normalizada}.
 }
 
 \subsection{Gráficos}
@@ -394,10 +410,10 @@ número de hexágonos e o \verb|data_popul|, que é a média normalizada por nú
 }
 \subsection{Mapas}
 \par
-Os mapas ainda não estão completamente refinados, mas em geral eles representam de forma visual os
+Os mapas representam de forma visual os
 dados já mencionados, para cada modalidade vão existir sempre dois mapas, um normalizado por população
-e outro normalizado por pontos de referência (WIP).
-
+e outro normalizado por pontos de referência, esses mapas tem escala absoluta, a seguir também serão
+exemplificados os mapas de escala normalizada.
 \begin{figure}[H]
 \begin{subfigure}{.5\textwidth}
 \centering
@@ -424,6 +440,40 @@ e outro normalizado por pontos de referência (WIP).
 \end{subfigure}%
 
 \caption{Comparação entre diferentes meios de transporte para o índice CMATA15.}
+\end{figure}
+
+\subsection{Mapas Normalizados}
+\par
+São similares aos mapas, mas, em vez de uma escala absoluta predeterminada, a escala de cores é
+normalizada de acordo com o valor mínimo e máximo:
+
+
+\begin{figure}[H]
+\begin{subfigure}{.5\textwidth}
+\centering
+\includegraphics[width=.75\linewidth]{CMATA15_2017_walk_pop_norm.png}
+\caption{CMATA15\_2017\_walk\_pop\_norm.png}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+\centering
+\includegraphics[width=.75\linewidth]{CMATA15_2017_bicycle_pop_norm.png}
+\caption{CMATA15\_2017\_bicycle\_pop\_norm.png}
+\end{subfigure}
+
+\vskip\baselineskip
+
+\begin{subfigure}{.5\textwidth}
+\centering
+\includegraphics[width=.75\linewidth]{CMATA15_2017_car_pop_norm.png}
+\caption{CMATA15\_2017\_car\_pop\_norm.png}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+\centering
+\includegraphics[width=.75\linewidth]{CMATA15_2017_public_transport_pop_norm.png}
+\caption{CMATA15\_2017\_public\_transport\_pop\_norm.png}
+\end{subfigure}%
+
+\caption{Comparação normalizada entre diferentes meios de transporte para o índice CMATA15.}
 \end{figure}
 
 \pagebreak

@@ -9,7 +9,7 @@ report:
 	make clear
 	mkdir tmp
 	cd tmp; \
-		latexmk ../relatorio/Relatorio.tex -pdf --shell-escape -xelatex
+		yes Q | latexmk ../relatorio/Relatorio.tex -pdf --shell-escape -xelatex
 
 clear:
 	yes | rm -R ./tmp || true
