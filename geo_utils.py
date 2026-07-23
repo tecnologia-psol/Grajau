@@ -271,11 +271,31 @@ def separate_categories(hexes: ogr.Layer, districts: ogr.Layer):
 		print(f'Processando feature {c}/{count} ({(100*c/count):.2f}%) ({len(datasets)} datasets)')
 		feature: ogr.Feature
 		fields = gen_hex_fields()
-		old_fields = feature.items().keys()
-		for s in old_fields:
-			desc = map_index_to_sub(s)
-			if not desc: UNNMAPED_FIELDS[s] = s
-			print(f"{s} -> {desc}")
+		dataset_fields = feature.items().keys()
+		for tipo in dataset_fields:
+			desc = map_index_to_sub(tipo)
+			if not desc: 
+				UNNMAPED_FIELDS[tipo] = tipo
+				continue
+			
+			year = feature.GetFieldAsString('year')
+			mode = feature.GetFieldAsString('mode')
+
+			f_name = f'{tipo}_{year}_{mode}'
+			file_loc = 'tmp/modalidades/' + f_name + '.shp'
+
+			data_value = feature.GetFieldAsString(tipo)
+			if data_value == '': continue
+			
+			datasets[f_name] = datasets.get(f_name) or gdal.GetDriverByName("ESRI Shapefile").Create(file_loc,0,0,1)
+			layer: ogr.Layer = datasets[f_name].GetLayer()
+			if not layer:
+				layer = datasets[f_name].CreateLayer('l1')
+				for field in fields: layer.CreateField(field)
+			file_locations[f_name] = file_locations.get(f_name) or file_loc
+			layer.CreateFeature(gen_simple_feature(float(data_value),feature,district_name or 'IDK'))
+
+			# print(f"{s} -> {desc}")
 		
 	print(f"Unmapped fields: {UNNMAPED_FIELDS.keys()}")
 	ret = {}
