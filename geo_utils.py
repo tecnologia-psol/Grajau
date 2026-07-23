@@ -28,6 +28,16 @@ indicadores = {
 	"CT": "Para todos os Centros de Referência da Assistência Social (CRAS)"
 }
 
+demografias = {
+	"PT": "População Total",
+	"PH": "População de Homens",
+	"PM": "População de Mulheres",
+	"PB": "População Branca",
+	"PA": "População Amarela",
+	"PN": "População Negra",
+	"PI": "População Indígena"
+}
+
 minutos = {
 	"15": "15 minutos",
 	"30": "30 minutos",
@@ -45,6 +55,28 @@ transport_modes = {
 }
 
 years = { '2017': 2017, '2018': 2018, '2019': 2019 }
+
+# Behold o melhor Regex já feito por um ser humano
+MOD_PATTERN = r"(CMA|CMP|TMI)((TT|TB|TM|TA|ST|SB|SM|SA|ET|EI|EF|EM|MT|MI|MF|MM|CT|PT|PH|PM|PB|PA|PN|PI)|(P(\d{2})(\d{2})?I))((15|30|45|60|90|120))?"
+MOD_REGEX = regex.compile(MOD_PATTERN)
+
+def map_index_to_sub(index : str) -> str | None:
+	global MOD_REGEX
+	m = MOD_REGEX.match(index)
+	if not m: return None
+	
+	g1 = m.group(1) # CMA | CMP | TMI
+	g2 = m.group(2) # Indicador ou Demografia (TT, TB, PI, P1924I)
+	g3 = m.group(3) # Subgrupo esquerdo do g2, caso ele seja indicador ou demografia tipada (TB, PI)
+	g4 = m.group(4) # Subgrupo direito do g2, caso ele seja um indicador CMP de idade (P1924I)
+	g5 = m.group(5) # Extrai idade esquerda do g4, por exemplo para "P1924I" o g5 é "19"
+	g6 = m.group(6) # Extrai idade direita do g4, "P1924I" dá "24", opcional pois existe o "P70I"
+	g8 = m.group(7) # Modalidade de minutos (15, 45 etc)
+
+	p1 = tipos[g1]
+	p2 = (indicadores | demografias).get(g3) or f"Na faixa etária {g5} - {g6}"
+	p3 = f"em {m.group(7)} minutos" if m.group(7) else ""
+	return f"{p1} {p2} {p3}."
 
 # Do mapa de features hexagonais (meio que gerado como efeito colateral)
 DATA_LABEL = "data" # Número do dado em específico
@@ -219,6 +251,8 @@ def compile_centroids(hexes: ogr.Layer):
 		layer.CreateFeature(n_feature)
 	dataset.Close()
 
+UNNMAPED_FIELDS = {}
+
 def separate_categories(hexes: ogr.Layer, districts: ogr.Layer):
 	print("Separando categorias")
 	datasets = {}
@@ -233,32 +267,17 @@ def separate_categories(hexes: ogr.Layer, districts: ogr.Layer):
 				district_name = district['NOME_DIST']
 				break
 		c+=1
-		# if c > 1000: break
+		if c > 10: break
 		print(f'Processando feature {c}/{count} ({(100*c/count):.2f}%) ({len(datasets)} datasets)')
 		feature: ogr.Feature
 		fields = gen_hex_fields()
-		derived_features = []
-		for tipo in tipos:
-			for indicador in indicadores:
-				for minuto in minutos:
-					year = feature.GetFieldAsString('year')
-					mode = feature.GetFieldAsString('mode')
-					modality = f'{tipo}{indicador}{minuto}'
-					f_name = f'{modality}_{year}_{mode}'
-					file_loc = 'tmp/modalidades/' + f_name + '.shp'
-					feat_index = feature.GetFieldIndex(modality)
-					if feat_index == -1: continue
-					data_value = feature.GetFieldAsString(feat_index)
-					if data_value == '': continue
-					datasets[f_name] = datasets.get(f_name) or gdal.GetDriverByName("ESRI Shapefile").Create(file_loc,0,0,1)
-					layer: ogr.Layer = datasets[f_name].GetLayer()
-					if not layer:
-						layer = datasets[f_name].CreateLayer('l1')
-						for field in fields: layer.CreateField(field)
-						
-					file_locations[f_name] = file_locations.get(f_name) or file_loc
-					layer.CreateFeature(gen_simple_feature(float(data_value),feature,district_name or 'IDK'))
-	
+		old_fields = feature.items().keys()
+		for s in old_fields:
+			desc = map_index_to_sub(s)
+			if not desc: UNNMAPED_FIELDS[s] = s
+			print(f"{s} -> {desc}")
+		
+	print(f"Unmapped fields: {UNNMAPED_FIELDS.keys()}")
 	ret = {}
 	for key in datasets:
 		value: gdal.Dataset = datasets[key]
