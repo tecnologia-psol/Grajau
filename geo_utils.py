@@ -253,10 +253,17 @@ def compile_centroids(hexes: ogr.Layer):
 
 UNNMAPED_FIELDS = {}
 
-def separate_categories(hexes: ogr.Layer, districts: ogr.Layer):
-	print("Separando categorias")
+def matches_filter(filter_array: [String], string: str) -> bool:
+	for pattern in filter_array:
+		if regex.fullmatch(pattern, string): return True
+	return False
+
+def separate_categories(hexes: ogr.Layer, districts: ogr.Layer, **kwargs):
 	datasets = {}
 	file_locations = {}
+
+	mod_filter = kwargs.get('filter') or [r'.+']
+	print(f"Separando categorias, filtro: {mod_filter}")
 
 	c, count = 0, hexes.GetFeatureCount()
 	for feature in hexes:
@@ -267,7 +274,7 @@ def separate_categories(hexes: ogr.Layer, districts: ogr.Layer):
 				district_name = district['NOME_DIST']
 				break
 		c+=1
-		if c > 10: break
+		# if c > 10: break
 		print(f'Processando feature {c}/{count} ({(100*c/count):.2f}%) ({len(datasets)} datasets)')
 		feature: ogr.Feature
 		fields = gen_hex_fields()
@@ -277,12 +284,14 @@ def separate_categories(hexes: ogr.Layer, districts: ogr.Layer):
 			if not desc: 
 				UNNMAPED_FIELDS[tipo] = tipo
 				continue
-			
+
 			year = feature.GetFieldAsString('year')
 			mode = feature.GetFieldAsString('mode')
 
 			f_name = f'{tipo}_{year}_{mode}'
 			file_loc = 'tmp/modalidades/' + f_name + '.shp'
+
+			if not matches_filter(mod_filter,f_name): continue
 
 			data_value = feature.GetFieldAsString(tipo)
 			if data_value == '': continue
@@ -297,11 +306,6 @@ def separate_categories(hexes: ogr.Layer, districts: ogr.Layer):
 
 			# print(f"{s} -> {desc}")
 		
-	print(f"Unmapped fields: {UNNMAPED_FIELDS.keys()}")
-	ret = {}
-	for key in datasets:
-		value: gdal.Dataset = datasets[key]
-		value.Close()
-		ret[key] = ogr.Open(file_locations[key])
+	print(f"Campos não reconhecidos: {UNNMAPED_FIELDS.keys()}")
+	return file_locations
 	
-	return ret

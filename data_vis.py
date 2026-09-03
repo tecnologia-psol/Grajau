@@ -6,6 +6,7 @@ import cartopy.io.shapereader as shpreader
 from cartopy.feature import ShapelyFeature
 import geo_utils
 import numpy as np
+import regex as re
 
 cidades_loc = "from/Acesso GIS/SP_Municipios_2024.shp"
 
@@ -155,6 +156,7 @@ def make_map(filename, title, vector_loc, data, info_col_name, color_function, d
 		geometry = record.geometry
 		distrito_data = data[data[geo_utils.DISTRICT_NAME_LABEL] == record.attributes[geo_utils.DISTRICT_NAME_LABEL]]
 		color = color_function(distrito_data.iloc[0][info_col_name])
+		if color[0] > 1 or color[1] > 1 or color[2] > 1: return
 		shape_feature = ShapelyFeature(geometry,ccrs.PlateCarree(),
 			facecolor=color or (0,0,1),
 			edgecolor=(.05,.05,.05)

@@ -41,6 +41,7 @@ if PROPERTIES["test_scale"]:
 	exit(0)
 
 # TODO peloamor use constantes
+
 os.mkdir("./tmp")
 os.mkdir("./tmp/modalidades")
 os.mkdir("./tmp/modalidades_distritos")
@@ -58,9 +59,21 @@ acesso_vector: gdal.Dataset = ogr.Open("from/Acesso GIS/acess_spo.gpkg")
 
 acesso_layer: osgeo.ogr.Layer = acesso_vector.GetLayer(0)
 
-#compila as modalidades antes da filtragem
-cats = geo_utils.separate_categories(acesso_layer, distritos_vector.GetLayer(0))
+modality_filter = [
+	r'\w{3}T[BMA]15.+', # Indicadores de emprego das varias escolaridades
+	r'CMPPT+', # População
+	r'CMAE\w+', # Estabelecimentos de ensino
+	r'.*T00\d.*' # Quantidades de empregos de varias escolaridades
+]
+
+# Compila cada modalidade em um shapefile diferente
+files = geo_utils.separate_categories(acesso_layer, distritos_vector.GetLayer(0),filter=modality_filter)
+
 dist_stats = {}
+cats = {}
+
+for key in files:
+	cats[key] = ogr.Open(files[key])
 
 for key in cats:
 	category = cats[key]
