@@ -1,6 +1,7 @@
 import re as regex
 from osgeo import gdal, ogr
 import data_vis, data_man
+import os
 
 tipos = {
 	"CMA": "Indicador de acessibilidade cumulativo ativo",
@@ -161,12 +162,22 @@ def gen_distr_feature(geometry, info_tab):
 	feature_new.SetGeometry(geometry)
 	return feature_new
 
-def compile_category(hexes: ogr.Layer, districts: ogr.Layer, category_name: string) -> string:
+def compile_district_stats(hexes: ogr.Layer, districts: ogr.Layer, category_name: string, **kwargs) -> string:
 	print(f"Calculando estatísticas distritais para a modalidade {category_name}")
 
-	distr_fields = generate_distr_fields()
+	ignore_if_cached = kwargs.get('ignore_cached') or True
+
 	shapefile_loc = 'tmp/modalidades_distritos/' + category_name + '_d.shp'
 	
+	if os.path.isfile(shapefile_loc):
+		if ignore_if_cached:
+			print(f"Ignorando {category_name}_d (já existe)")
+			return shapefile_loc
+		else:
+			os.remove(shapefile_loc)
+	
+	distr_fields = generate_distr_fields()
+
 	dataset: gdal.Dataset = gdal.GetDriverByName("ESRI Shapefile").Create(shapefile_loc,0,0,1)
 	layer: ogr.Layer = dataset.GetLayer() or dataset.CreateLayer('l1')
 	
@@ -263,6 +274,10 @@ def separate_categories(hexes: ogr.Layer, districts: ogr.Layer, **kwargs):
 	file_locations = {}
 
 	mod_filter = kwargs.get('filter') or [r'.+']
+	skip_cache = kwargs.get('skip_cache') or True # pula arquivos previamente gerados
+
+	skipped_datasets = {}
+
 	print(f"Separando categorias, filtro: {mod_filter}")
 
 	c, count = 0, hexes.GetFeatureCount()
@@ -275,7 +290,7 @@ def separate_categories(hexes: ogr.Layer, districts: ogr.Layer, **kwargs):
 				break
 		c+=1
 		# if c > 10: break
-		print(f'Processando feature {c}/{count} ({(100*c/count):.2f}%) ({len(datasets)} datasets)')
+		print(f'Processando feature {c}/{count} ({(100*c/count):.2f}%) ({len(datasets)} datasets na memória)')
 		feature: ogr.Feature
 		fields = gen_hex_fields()
 		dataset_fields = feature.items().keys()
@@ -288,24 +303,35 @@ def separate_categories(hexes: ogr.Layer, districts: ogr.Layer, **kwargs):
 			year = feature.GetFieldAsString('year')
 			mode = feature.GetFieldAsString('mode')
 
-			f_name = f'{tipo}_{year}_{mode}'
-			file_loc = 'tmp/modalidades/' + f_name + '.shp'
+			file_ident = f'{tipo}_{year}_{mode}'
+			file_loc = 'tmp/modalidades/' + file_ident + '.shp'
 
-			if not matches_filter(mod_filter,f_name): continue
+			if os.path.isfile(file_loc) and not datasets.get(file_ident) and skip_cache:
+				if not skipped_datasets.get(file_ident):
+					print(f'pulando {file_ident} (existe)')
+					skipped_datasets[file_ident] = file_loc
+					file_locations[file_ident] = file_loc
+				continue
+
+			if not matches_filter(mod_filter,file_ident): continue
 
 			data_value = feature.GetFieldAsString(tipo)
 			if data_value == '': continue
 			
-			datasets[f_name] = datasets.get(f_name) or gdal.GetDriverByName("ESRI Shapefile").Create(file_loc,0,0,1)
-			layer: ogr.Layer = datasets[f_name].GetLayer()
+			datasets[file_ident] = datasets.get(file_ident) or gdal.GetDriverByName("ESRI Shapefile").Create(file_loc,0,0,1)
+			layer: ogr.Layer = datasets[file_ident].GetLayer()
 			if not layer:
-				layer = datasets[f_name].CreateLayer('l1')
+				layer = datasets[file_ident].CreateLayer('l1')
 				for field in fields: layer.CreateField(field)
-			file_locations[f_name] = file_locations.get(f_name) or file_loc
+			file_locations[file_ident] = file_locations.get(file_ident) or file_loc
 			layer.CreateFeature(gen_simple_feature(float(data_value),feature,district_name or 'IDK'))
 
 			# print(f"{s} -> {desc}")
-		
+	
+	for d in datasets:
+		dataset: ogr.Dataset = datasets[d]
+		dataset.Close()
+
 	print(f"Campos não reconhecidos: {UNNMAPED_FIELDS.keys()}")
 	return file_locations
 	

@@ -40,17 +40,23 @@ if PROPERTIES["test_scale"]:
 	plt.show()
 	exit(0)
 
+def trymkdir(dir):
+	try:
+		os.mkdir(dir)
+	except:
+		print(f'Não consegui criar o diretório {dir}')
+
 # TODO peloamor use constantes
 
-os.mkdir("./tmp")
-os.mkdir("./tmp/modalidades")
-os.mkdir("./tmp/modalidades_distritos")
-os.mkdir("./to/modalidades_mapas")
-os.mkdir("./to/modalidades_mapas_normalizados")
-os.mkdir("./to/modalidades_tabelas")
-os.mkdir("./to/modalidades_tabelas_csv")
-os.mkdir("./to/modalidades_graficos")
-os.mkdir("./to/modalidades_graficos_redux")
+trymkdir("./tmp")
+trymkdir("./tmp/modalidades")
+trymkdir("./tmp/modalidades_distritos")
+trymkdir("./to/modalidades_mapas")
+trymkdir("./to/modalidades_mapas_normalizados")
+trymkdir("./to/modalidades_tabelas")
+trymkdir("./to/modalidades_tabelas_csv")
+trymkdir("./to/modalidades_graficos")
+trymkdir("./to/modalidades_graficos_redux")
 
 print(from_d, '->', temp_d, '->', to_d)
 
@@ -67,7 +73,16 @@ modality_filter = [
 ]
 
 # Compila cada modalidade em um shapefile diferente
-files = geo_utils.separate_categories(acesso_layer, distritos_vector.GetLayer(0),filter=modality_filter)
+
+files = geo_utils.separate_categories(
+	acesso_layer,
+	distritos_vector.GetLayer(0),
+	filter=modality_filter)
+
+files = os.listdir('./tmp/modalidades_distritos')
+
+# TODO: USA O NGC DE PASTAS LA QUE VC APRENDEU
+# pasta_de_fotos_full = [PATH_SEP.join([PHOTO_DIR,p]) for p in pasta_de_fotos]
 
 dist_stats = {}
 cats = {}
@@ -75,7 +90,9 @@ cats = {}
 for key in files:
 	cats[key] = ogr.Open(files[key])
 
+## TODO pelo amor ne essa pipeline ta um horror
+
 for key in cats:
 	category = cats[key]
-	loc = geo_utils.compile_category(category.GetLayer(0), distritos_vector.GetLayer(0), key)
+	loc = geo_utils.compile_district_stats(category.GetLayer(0), distritos_vector.GetLayer(0), key)
 	
