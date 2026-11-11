@@ -74,25 +74,37 @@ modality_filter = [
 
 # Compila cada modalidade em um shapefile diferente
 
-files = geo_utils.separate_categories(
-	acesso_layer,
-	distritos_vector.GetLayer(0),
-	filter=modality_filter)
+# files = geo_utils.separate_categories(
+# 	acesso_layer,
+# 	distritos_vector.GetLayer(0),
+# 	filter=modality_filter)
 
-files = os.listdir('./tmp/modalidades_distritos')
+files = os.listdir('./tmp/modalidades')
+files = [fl for fl in files if fl.endswith('shp')]
+cats = {}
+
+for fl in files:
+	cats[fl[:-4]] = f'./tmp/modalidades/{fl}'
 
 # TODO: USA O NGC DE PASTAS LA QUE VC APRENDEU
 # pasta_de_fotos_full = [PATH_SEP.join([PHOTO_DIR,p]) for p in pasta_de_fotos]
 
 dist_stats = {}
-cats = {}
-
-for key in files:
-	cats[key] = ogr.Open(files[key])
 
 ## TODO pelo amor ne essa pipeline ta um horror
 
+i = 0
 for key in cats:
+	print(f'Compilando categoria {key} para distritos: {i+1}/{len(cats)} ({100 * (i+1)/len(cats):.2f})%')
 	category = cats[key]
-	loc = geo_utils.compile_district_stats(category.GetLayer(0), distritos_vector.GetLayer(0), key)
-	
+	category = ogr.Open(category)
+	shp_loc, xlsl_loc = geo_utils.compile_district_stats(category.GetLayer(0), distritos_vector.GetLayer(0), key)
+	category.Close()
+	dist_stats[key] = (shp_loc, xlsl_loc)
+	i += 1
+
+i = 0
+for key in dist_stats:
+	print(f"Gerando mapa para {key}: {i+1}/{len(dist_stats)} ({100 * (i+1)/len(dist_stats):.2f})%")
+	geo_utils.gen_stat_vis(dist_stats[key][0],dist_stats[key][1],key)
+	i += 1

@@ -2,6 +2,7 @@ import re as regex
 from osgeo import gdal, ogr
 import data_vis, data_man
 import os
+import pandas as pd
 
 tipos = {
 	"CMA": "Indicador de acessibilidade cumulativo ativo",
@@ -162,7 +163,10 @@ def gen_distr_feature(geometry, info_tab):
 	feature_new.SetGeometry(geometry)
 	return feature_new
 
+distr_fields = generate_distr_fields()
+
 def compile_district_stats(hexes: ogr.Layer, districts: ogr.Layer, category_name: string, **kwargs) -> string:
+	global distr_fields
 	print(f"Calculando estatísticas distritais para a modalidade {category_name}")
 
 	ignore_if_cached = kwargs.get('ignore_cached') or True
@@ -172,11 +176,11 @@ def compile_district_stats(hexes: ogr.Layer, districts: ogr.Layer, category_name
 	if os.path.isfile(shapefile_loc):
 		if ignore_if_cached:
 			print(f"Ignorando {category_name}_d (já existe)")
-			return shapefile_loc
+			table_loc = data_man.gen_table({},category_name)
+			return shapefile_loc, table_loc
 		else:
 			os.remove(shapefile_loc)
 	
-	distr_fields = generate_distr_fields()
 
 	dataset: gdal.Dataset = gdal.GetDriverByName("ESRI Shapefile").Create(shapefile_loc,0,0,1)
 	layer: ogr.Layer = dataset.GetLayer() or dataset.CreateLayer('l1')
@@ -222,15 +226,19 @@ def compile_district_stats(hexes: ogr.Layer, districts: ogr.Layer, category_name
 		feature_to_add = gen_distr_feature(d_geometries[index],d_data[index])
 		layer.CreateFeature(feature_to_add)
 	
-	# TODO: queue em uma thread separada
-	# Ou sla só salva a lista e faz no final
-	data_table = data_man.gen_table(d_data,category_name)
+	table_loc = data_man.gen_table(d_data,category_name)
+	dataset.Close()
+	return shapefile_loc, table_loc
+
+def gen_stat_vis(shapefile_loc, table_loc, cat_name):
+	print(f'vis {shapefile_loc} : {table_loc}')
+	data_table = pd.read_table(table_loc) # ué???
+	# data_man.gen_table(d_data,category_name)
+	# TODO: PUXA O JA SALVO
 	data_table = data_table.sort_values(DATA_AVG_LABEL)
 	# FIXME data_vis.make_bar(f'{category_name}_avg',data_table[DISTRICT_NAME_LABEL],data_table[DATA_AVG_LABEL],f'{category_name}_avg')
 	data_table = data_table.sort_values(DATA_BY_POPULATION_LABEL)
 	# FIXME data_vis.make_bar(f'{category_name}_pop',data_table[DISTRICT_NAME_LABEL],data_table[DATA_BY_POPULATION_LABEL],f'{category_name}_pop')
-
-	dataset.Close()
 
 	# Mapas absolutos
 	# data_vis.make_map(f'{category_name}_pop',category_name,shapefile_loc,data_table,DATA_BY_POPULATION_LABEL,data_vis.get_color_for_population_abs)
@@ -247,7 +255,7 @@ def compile_district_stats(hexes: ogr.Layer, districts: ogr.Layer, category_name
 	data_vis.set_limits(data_min,data_max)
 	data_vis.make_map(f'{category_name}_avg_norm',category_name,shapefile_loc,data_table,DATA_AVG_LABEL,data_vis.get_color_rel,dir='./to/modalidades_mapas_normalizados/')
 
-	return shapefile_loc
+	return
 
 def compile_centroids(hexes: ogr.Layer):
 	loc = 'tmp/centroids.shp'
@@ -290,7 +298,7 @@ def separate_categories(hexes: ogr.Layer, districts: ogr.Layer, **kwargs):
 				break
 		c+=1
 		# if c > 10: break
-		print(f'Processando feature {c}/{count} ({(100*c/count):.2f}%) ({len(datasets)} datasets na memória)')
+		print(f'Processando feature {c}/{count} ({(100*c/count):.2f}%) ({len(datasets)} datasets na memória, {len(file_locations)} no total)')
 		feature: ogr.Feature
 		fields = gen_hex_fields()
 		dataset_fields = feature.items().keys()
