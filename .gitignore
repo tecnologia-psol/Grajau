@@ -1,5 +1,5 @@
 from/
 to/
-tmp/
+*tmp/
 __pycache__/
 time.log

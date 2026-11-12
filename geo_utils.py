@@ -231,10 +231,8 @@ def compile_district_stats(hexes: ogr.Layer, districts: ogr.Layer, category_name
 	return shapefile_loc, table_loc
 
 def gen_stat_vis(shapefile_loc, table_loc, cat_name):
-	print(f'vis {shapefile_loc} : {table_loc}')
-	data_table = pd.read_table(table_loc) # ué???
-	# data_man.gen_table(d_data,category_name)
-	# TODO: PUXA O JA SALVO
+	# print(f'vis {shapefile_loc} : {table_loc}')
+	data_table = pd.read_excel(table_loc) # ué???
 	data_table = data_table.sort_values(DATA_AVG_LABEL)
 	# FIXME data_vis.make_bar(f'{category_name}_avg',data_table[DISTRICT_NAME_LABEL],data_table[DATA_AVG_LABEL],f'{category_name}_avg')
 	data_table = data_table.sort_values(DATA_BY_POPULATION_LABEL)
@@ -244,16 +242,16 @@ def gen_stat_vis(shapefile_loc, table_loc, cat_name):
 	# data_vis.make_map(f'{category_name}_pop',category_name,shapefile_loc,data_table,DATA_BY_POPULATION_LABEL,data_vis.get_color_for_population_abs)
 	# data_vis.make_map(f'{category_name}_avg',category_name,shapefile_loc,data_table,DATA_AVG_LABEL,data_vis.get_color_for_average_abs)
 
-	# Mapas normalizados
+	# Mapas de legenda normalizada
 	data_min = data_table.sort_values(DATA_BY_POPULATION_LABEL,ascending=True).iloc[0][DATA_BY_POPULATION_LABEL]
 	data_max = data_table.sort_values(DATA_BY_POPULATION_LABEL,ascending=False).iloc[0][DATA_BY_POPULATION_LABEL]
 	data_vis.set_limits(data_min,data_max)
-	data_vis.make_map(f'{category_name}_pop_norm',category_name,shapefile_loc,data_table,DATA_BY_POPULATION_LABEL,data_vis.get_color_rel,dir='./to/modalidades_mapas_normalizados/')
+	data_vis.make_map(f'{cat_name}_pop_norm',cat_name,shapefile_loc,data_table,DATA_BY_POPULATION_LABEL,data_vis.get_color_rel,dir='./to/modalidades_mapas_normalizados/')
 	
-	data_min = data_table.sort_values(DATA_AVG_LABEL,ascending=True).iloc[0][DATA_AVG_LABEL]
-	data_max = data_table.sort_values(DATA_AVG_LABEL,ascending=False).iloc[0][DATA_AVG_LABEL]
-	data_vis.set_limits(data_min,data_max)
-	data_vis.make_map(f'{category_name}_avg_norm',category_name,shapefile_loc,data_table,DATA_AVG_LABEL,data_vis.get_color_rel,dir='./to/modalidades_mapas_normalizados/')
+	# data_min = data_table.sort_values(DATA_AVG_LABEL,ascending=True).iloc[0][DATA_AVG_LABEL]
+	# data_max = data_table.sort_values(DATA_AVG_LABEL,ascending=False).iloc[0][DATA_AVG_LABEL]
+	# data_vis.set_limits(data_min,data_max)
+	# data_vis.make_map(f'{cat_name}_avg_norm',cat_name,shapefile_loc,data_table,DATA_AVG_LABEL,data_vis.get_color_rel,dir='./to/modalidades_mapas_normalizados/')
 
 	return
 

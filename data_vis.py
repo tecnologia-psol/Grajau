@@ -7,6 +7,7 @@ from cartopy.feature import ShapelyFeature
 import geo_utils
 import numpy as np
 import regex as re
+import os
 
 cidades_loc = "from/Acesso GIS/SP_Municipios_2024.shp"
 
@@ -131,6 +132,11 @@ def make_colormap(color_function,min,max,step):
 
 def make_map(filename, title, vector_loc, data, info_col_name, color_function, dir = './to/modalidades_mapas/', **kwargs):
 	global cidades_loc, DATA_MIN, DATA_MAX
+	fpath = dir + filename + '.png'
+	if os.path.isfile(fpath):
+		print(f'Mapa {fpath} já existe')
+		return
+
 	fig = plt.figure(dpi=200)
 
 	rmin = kwargs.get('rmin',DATA_MIN)
@@ -150,6 +156,7 @@ def make_map(filename, title, vector_loc, data, info_col_name, color_function, d
 		)
 		ax.add_feature(shape_feature)
 
+	read.close()
 	read: shpreader.BasicReader = shpreader.Reader(vector_loc)
 	
 	for record in read.records():
@@ -169,7 +176,8 @@ def make_map(filename, title, vector_loc, data, info_col_name, color_function, d
 	norm = mpl.colors.Normalize(vmin=rmin, vmax=rmax)
 	fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap),
 				ax=ax, orientation='vertical', label=f'{info_col_name}')
-	
+
 	plt.tight_layout()
-	plt.savefig(dir + filename + '.png')
-	plt.close()
+	plt.savefig(fpath)
+	read.close()
+	plt.close(fig)
